@@ -115,18 +115,6 @@ export class Shopify extends BaseService {
     public createAuthorizationUrl = (data: { shop_domain: string; redirect_url: string }) => this.sendRequest<{ url: string }>("url", "GET", data);
 
     public authorize = (data: { code: string, shop: string, hmac: string, state?: string }, fullQueryString: string) => this.sendRequest<SessionTokenResponse>(`authorize?${fullQueryString.replace(/^\?/, "")}`, "POST", data);
-
-    public listOrders = (data: { limit?: number; page?: number; } = {}) => this.sendRequest<Order[]>(`orders`, "GET", data);
-
-    public getOrder = (id: number | string) => this.sendRequest<Order>(`orders/${id}`, "GET");
-
-    public createOrder = (data: CreateOrderRequest) => this.sendRequest<Order>("orders", "POST", data);
-
-    public openOrder = (id: string | number) => this.sendRequest<Order>(`orders/${id}/open`, "POST");
-
-    public closeOrder = (id: string | number) => this.sendRequest<Order>(`orders/${id}/close`, "POST");
-
-    public deleteOrder = (id: string | number) => this.sendRequest<void>(`orders/${id}`, "DELETE");
 }
 
 export class Sessions extends BaseService {

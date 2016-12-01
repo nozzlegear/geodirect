@@ -101,15 +101,14 @@ async function startServer(hostname: string, port: number, securePort: number) {
             options.email = `support@${EMAIL_DOMAIN}`;
             options.agreeTos = true;
             options.domains = (certs && certs.altnames) || options.domains;
+ 
+            if (!options.domains.every(domain => domain.toLowerCase().indexOf(EMAIL_DOMAIN.toLowerCase()) >= 0)) {
+                const msg = `Attempted to approve a domain that wasn't ${EMAIL_DOMAIN} or a subdomain thereof.`;
 
-            // TODO: Uncomment the next block to ensure certificates are only approved for your own domain. 
-            // if (!options.domains.every(domain => domain.toLowerCase().indexOf(EMAIL_DOMAIN.toLowerCase()) >= 0)) {
-            //     const msg = `Attempted to approve a domain that wasn't ${EMAIL_DOMAIN} or a subdomain thereof.`;
+                inspect(msg, options.domains);
 
-            //     inspect(msg, options.domains);
-
-            //     return cb(new Error(msg));
-            // }
+                return cb(new Error(msg));
+            }
 
             cb(null, { options, certs });
         },

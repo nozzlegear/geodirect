@@ -13,7 +13,7 @@ import Paths, { getPathRegex } from "../modules/paths";
 import { Router, Redirect, Link, Route, IndexRoute, browserHistory, RouterContext } from "react-router";
 
 // Stores
-import { Auth as AuthStore, Dashboard as DashboardStore } from "./stores";
+import { Auth as AuthStore } from "./stores";
 
 // Layout components
 import Navbar from "./components/nav";
@@ -104,7 +104,7 @@ export function MinimalMain(props) {
     }
 
     const routes = (
-        <Provider {...{ auth: AuthStore, dashboard: DashboardStore }}>
+        <Provider {...{ auth: AuthStore }}>
             <MuiThemeProvider muiTheme={theme}>
                 <Router history={browserHistory}>
                     <Route component={Main}>

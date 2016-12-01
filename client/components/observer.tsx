@@ -3,11 +3,9 @@ import Router from "./router";
 import * as React from 'react';
 import { History } from "history";
 import { AuthStore } from "../stores/auth";
-import { DashboardStore } from "../stores/dashboard";
 
 interface StoreProps {
     auth?: AuthStore,
-    dashboard?: DashboardStore, 
 }
 
 abstract class ObserverComponent<IProps, IState> extends Router<IProps & StoreProps, IState> {

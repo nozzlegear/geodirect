@@ -1,11 +1,12 @@
 import { wrap } from "boom";
+import { snakeCase } from "lodash";
 import { stringify as qs } from "qs";
 import fetch, { Response } from "node-fetch";
-import { COUCHDB_URL } from "../modules/constants";
+import { COUCHDB_URL, APP_NAME } from "../modules/constants";
 import { User, Database, CouchResponse, CouchDoc } from "gearworks";
 
 const UsersDatabaseInfo = {
-    name: "gearworks_users",
+    name: `${snakeCase(APP_NAME)}_users`,
     indexes: ["shopify_access_token", "password_reset_token", "shop_id"]
 };
 
