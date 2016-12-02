@@ -1,18 +1,23 @@
 import * as React from 'react';
 import { theme } from "../../app";
-import { truncate } from "lodash";
 import { observer } from "mobx-react";
+import { Geodirect } from "gearworks";
 import { Models } from "shopify-prime";
+import Dialog from "./geodirect_dialog";
+import { truncate, range } from "lodash";
+import Paths from "../../../modules/paths";
 import Observer from "../../components/observer";
+import { Region, countries } from "typed-countries";
 import AddIcon from "material-ui/svg-icons/content/add";
-import { Shopify, ApiError } from "../../../modules/api";
+import { Geodirects, ApiError } from "../../../modules/api";
 import DeleteIcon from "material-ui/svg-icons/action/delete";
 import SelectAllIcon from "material-ui/svg-icons/content/select-all";
 import {
     CircularProgress,
-    FloatingActionButton,
     MenuItem,
     Snackbar,
+    RaisedButton,
+    IconButton,
 } from "material-ui";
 import {
     Table,
@@ -31,6 +36,7 @@ export interface IState {
     loading?: boolean;
     error?: string;
     dialogOpen?: boolean;
+    geodirects?: Geodirect[];
     selectedRows?: string | number[];
 }
 
@@ -48,7 +54,8 @@ export default class HomePage extends Observer<IProps, IState> {
 
     private configureState(props: IProps, useSetState: boolean) {
         let state: IState = {
-            loading: false,
+            loading: true,
+            geodirects: [],
         }
 
         if (!useSetState) {
@@ -70,8 +77,40 @@ export default class HomePage extends Observer<IProps, IState> {
         }
     }
 
-    public async componentDidMount() {
+    private async closeDialog(geo?: Geodirect) {
+        const geos = this.state.geodirects;
 
+        if (geo) {
+            const index = geos.findIndex(g => g._id === geo._id);
+
+            if (index > -1) {
+                geos[index] = geo;
+            } else {
+                geos.push(geo);
+            }
+        }
+
+        this.setState({ dialogOpen: false, geodirects: geos });
+    }
+
+    public async componentDidMount() {
+        const api = new Geodirects(this.props.auth.token);
+        let geodirects: Geodirect[] = [];
+        let error: string = undefined;
+
+        try {
+            geodirects = await api.list();
+        } catch (e) {
+            const err: ApiError = e;
+
+            if (err.unauthorized && this.handleUnauthorized(Paths.home.index)) {
+                return;
+            }
+
+            error = err.message;
+        }
+
+        this.setState({ loading: false, geodirects, error });
     }
 
     public componentDidUpdate() {
@@ -83,7 +122,7 @@ export default class HomePage extends Observer<IProps, IState> {
     }
 
     public render() {
-        let body: JSX.Element;
+        let body: JSX.Element | JSX.Element[];
 
         if (this.state.loading) {
             body = (
@@ -92,39 +131,69 @@ export default class HomePage extends Observer<IProps, IState> {
                 </div>
             );
         } else {
-            body = (
-                <Table selectable={false} >
-                    <TableHeader>
-                        <TR>
-                            <TH>{"Country"}</TH>
-                            <TH>{"Redirects To"}</TH>
-                            <TH>{"Message"}</TH>
-                            <TH>{"Preserves Path?"}</TH>
-                            <TH>{"Test"}</TH>
-                        </TR>
-                    </TableHeader>
-                    <TableBody deselectOnClickaway={false}>
-                        <TR key={1} selected={false} >
-                            <TD>{"Mexico"}</TD>
-                            <TD><a href='' target="_blank">{`https://mx.example.com`}</a></TD>
-                            <TD>{truncate("Qui ea aliqua enim cillum et nostrud magna id. In id incididunt fugiat magna nisi proident enim culpa aliquip do culpa. Elit quis ex do incididunt proident deserunt nisi est. Laboris anim dolor consequat cillum excepteur adipisicing ea esse dolor adipisicing.", 75)}</TD>
-                            <TD>{true.toString()}</TD>
-                            <TD>{"Click to test."}</TD>
-                        </TR>
-                    </TableBody>
-                </Table>
-            )
+            const geosByRegion = this.state.geodirects.reduce((result, geo) => {
+                const country = countries.find(c => c.iso === geo.country);
+                const region = country.region;
+
+                result[region].push(geo);
+
+                return result;
+            }, { Americas: [], Europe: [], Asia: [], Oceania: [], Africa: [], Antarctica: [] });
+
+            body = Object.getOwnPropertyNames(geosByRegion).map(region => {
+                const geodirects = geosByRegion[region] as Geodirect[];
+
+                if (geodirects.length === 0) {
+                    return null;
+                }
+
+                const rows = geodirects.map(geo =>
+                    <TR key={geo._id} selected={false}>
+                        <TD>{geo.country}</TD>
+                        <TD><a href={geo.url} target="_blank">{geo.url}</a></TD>
+                        <TD>{truncate(geo.message, 75)}</TD>
+                        <TD>{geo.hits || 0}</TD>
+                        <TD><DeleteIcon /></TD>
+                    </TR>
+                );
+                return (
+                    <div>
+                        <h2>{region}</h2>
+                        <Table selectable={false} >
+                            <TableHeader>
+                                <TR>
+                                    <TH>{"Country"}</TH>
+                                    <TH>{"Redirects To"}</TH>
+                                    <TH>{"Message"}</TH>
+                                    <TH>{"Hits"}</TH>
+                                    <TH><IconButton><DeleteIcon /></IconButton></TH>
+                                </TR>
+                            </TableHeader>
+                            <TableBody deselectOnClickaway={false}>
+                                {rows}
+                            </TableBody>
+                        </Table>
+                        <hr />
+                    </div>
+                );
+            });
         };
 
         return (
             <div>
                 <section id="home" className="content">
-                    <h2 className="content-title">{`Geography-based URL redirects for ${this.props.auth.session.shopify_shop_name}`}</h2>
+                    <div className="pure-g align-children">
+                        <div className="pure-u-18-24">
+                            <h2 className="content-title">{`Geography-based URL redirects for ${this.props.auth.session.shopify_shop_name}`}</h2>
+                        </div>
+                        <div className="pure-u-6-24 text-right">
+                            <RaisedButton primary={true} label={`New Geodirect`} icon={<AddIcon />} onTouchTap={e => this.setState({ dialogOpen: true })} />
+                        </div>
+                    </div>
+                    <hr />
                     {body}
                 </section>
-                <FloatingActionButton title="New Geodirect" onClick={e => this.setState({ dialogOpen: true })} style={{ position: "fixed", right: "50px", bottom: "75px" }}>
-                    <AddIcon />
-                </FloatingActionButton>
+                <Dialog open={this.state.dialogOpen} apiToken={this.props.auth.token} onRequestClose={(geo) => this.closeDialog(geo)} />
                 {this.state.error ? <Snackbar open={true} autoHideDuration={10000} message={this.state.error} onRequestClose={e => this.closeErrorSnackbar(e)} /> : null}
             </div>
         );

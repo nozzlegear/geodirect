@@ -13,12 +13,14 @@ import { RouterResponse, RouterFunction, RouterRequest, User, SessionToken, With
 import registerAccounts from "./accounts";
 import registerSessions from "./sessions";
 import registerWebhooks from "./webhooks";
+import registerGeodirects from "./geodirects";
 import registerIntegrations from "./integrations";
 
 const routeRegisters = [
     registerAccounts,
     registerSessions,
     registerWebhooks,
+    registerGeodirects,
     registerIntegrations,
 ]
 

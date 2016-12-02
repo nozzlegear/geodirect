@@ -1,3 +1,4 @@
+import { Geodirect } from "gearworks";
 import { Models } from "shopify-prime";
 import { resolve, reject } from "bluebird";
 import { stringify as queryString } from "qs";
@@ -123,4 +124,20 @@ export class Sessions extends BaseService {
     }
 
     public create = (data: { username: string, password: string }) => this.sendRequest<SessionTokenResponse>("", "POST", data);
+}
+
+export class Geodirects extends BaseService {
+    constructor(authToken: string) {
+        super("/api/v1/geodirects", authToken);
+    }
+
+    public create = (data: Geodirect) => this.sendRequest<Geodirect>("", "POST", data);
+
+    public update = (id: string, data: Geodirect) => this.sendRequest<Geodirect>(`${id}`, "PUT", data);
+
+    public get = (id: string) => this.sendRequest<Geodirect>(`${id}`, "GET");
+
+    public list = () => this.sendRequest<Geodirect[]>(``, "GET");
+
+    public delete = (id: string) => this.sendRequest<void>(`${id}`, "DELETE");
 }

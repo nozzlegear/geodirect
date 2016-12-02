@@ -176,4 +176,12 @@ declare module "gearworks" {
          */
         permissions: string[];
     }
+
+    export interface Geodirect extends CouchDoc {
+        shop_id?: number;
+        country?: string;
+        url?: string;
+        message?: string;
+        hits?: number;
+    }
 }

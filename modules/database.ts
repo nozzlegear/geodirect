@@ -3,12 +3,17 @@ import { snakeCase } from "lodash";
 import { stringify as qs } from "qs";
 import fetch, { Response } from "node-fetch";
 import { COUCHDB_URL, APP_NAME } from "../modules/constants";
-import { User, Database, CouchResponse, CouchDoc } from "gearworks";
+import { User, Database, CouchResponse, CouchDoc, Geodirect } from "gearworks";
 
 const UsersDatabaseInfo = {
     name: `${snakeCase(APP_NAME)}_users`,
     indexes: ["shopify_access_token", "password_reset_token", "shop_id"]
 };
+
+const GeodirectsDatabaseInfo = {
+    name: `${snakeCase(APP_NAME)}_geodirections`,
+    indexes: ["shop_id"]
+}
 
 export default async function configureDatabases() {
     const dbInfo = await fetch(COUCHDB_URL, { method: "GET" });
@@ -24,7 +29,7 @@ export default async function configureDatabases() {
         console.warn(`Warning: Gearworks expects your CouchDB instance to be running CouchDB 2.0 or higher. Version detected: ${version}. Some database methods may not work.`)
     }
 
-    [UsersDatabaseInfo].forEach(async db => {
+    [UsersDatabaseInfo, GeodirectsDatabaseInfo].forEach(async db => {
         try {
             const result = await fetch(`${COUCHDB_URL}/${db.name}`, { method: "PUT" });
 
@@ -190,3 +195,4 @@ function prepDatabase<T extends CouchDoc>(name: string) {
 }
 
 export const users = prepDatabase<User>(UsersDatabaseInfo.name);
+export const geodirects = prepDatabase<Geodirect>(GeodirectsDatabaseInfo.name);

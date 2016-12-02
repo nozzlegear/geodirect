@@ -89,6 +89,7 @@
     "catbox": "^7.1.1",
     "catbox-memory": "^2.0.2",
     "express": "^4.14.0",
+    "geoip-country-only": "^1.1.8",
     "gravatar": "^1.5.2",
     "history": "^4.4.0",
     "iron": "^4.0.4",
@@ -114,6 +115,7 @@
     "sitemap": "^1.6.0",
     "string-capitalize": "^1.0.1",
     "typebase.css": "^0.5.0",
+    "typed-countries": "^1.1.0",
     "whatwg-fetch": "^1.0.0"
   }
 }
