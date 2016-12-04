@@ -1,4 +1,5 @@
 import { wrap } from "boom";
+import inspect from "./inspect";
 import { snakeCase } from "lodash";
 import { stringify as qs } from "qs";
 import fetch, { Response } from "node-fetch";
@@ -148,8 +149,8 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             // Post, put and copy requests do not return the object itself. Update the input object with new id and rev values.
             return Object.assign({}, data, { _id: body.id, _rev: body.rev });
         },
-        put: async function (data, rev?) {
-            const result = await fetch(databaseUrl + data._id + `?${qs({ rev })}`, {
+        put: async function (id: string, data, rev: string) {
+            const result = await fetch(databaseUrl + id + `?${qs({ rev })}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
@@ -162,8 +163,8 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             // Post, put and copy requests do not return the object itself. Update the input object with new id and rev values.
             return Object.assign({}, data, { _id: body.id, _rev: body.rev });
         },
-        copy: async function (data, newId) {
-            const result = await fetch(databaseUrl + data._id, {
+        copy: async function (id: string, data, newId) {
+            const result = await fetch(databaseUrl + id, {
                 method: "COPY",
                 headers: {
                     Destination: newId

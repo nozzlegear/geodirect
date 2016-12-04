@@ -1,6 +1,7 @@
 import * as joi from "joi";
 import * as boom from "boom";
 import { Express } from "express";
+import inspect from "../../modules/inspect";
 import { geodirects } from "../../modules/database";
 import { RouterFunction, Geodirect } from "gearworks";
 
@@ -62,7 +63,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         }),
         handler: async function (req, res, next) {
             let geo: Geodirect = Object.assign({}, req.validatedBody, { shop_id: req.user.shopify_shop_id });
-            geo = await geodirects.post(req.validatedBody);
+            geo = await geodirects.post(geo);
 
             res.json(geo);
 
@@ -88,7 +89,13 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         }),
         handler: async function (req, res, next) {
             const id = req.validatedParams.id;
-            const geo = await geodirects.put(Object.assign({}, req.validatedBody, { _id: id }));
+            const original = await geodirects.get(id)
+
+            if (!original || original.shop_id !== req.user.shopify_shop_id) {
+                return next(boom.notFound(`No geodirect with id of ${id} belongong to shop id ${req.user.shopify_shop_id}.`));
+            }
+
+            const geo = await geodirects.put(id, Object.assign({}, original, req.validatedBody, {_rev: undefined, _id: undefined}), original._rev);
 
             res.json(geo);
 

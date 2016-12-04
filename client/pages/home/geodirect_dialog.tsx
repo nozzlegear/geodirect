@@ -20,6 +20,7 @@ export interface IProps extends React.Props<any> {
     open: boolean;
     apiToken: string;
     onRequestClose: (geodirect?: Geodirect) => void;
+    original?: Geodirect;
 }
 
 export interface IState {
@@ -30,7 +31,7 @@ export interface IState {
     url?: string;
 }
 
-export default class NewOrderDialog extends Router<IProps, IState> {
+export default class GeodirectDialog extends Router<IProps, IState> {
     constructor(props: IProps, context) {
         super(props, context);
 
@@ -42,10 +43,11 @@ export default class NewOrderDialog extends Router<IProps, IState> {
     //#region Utility functions
 
     private configureState(props: IProps, useSetState: boolean) {
+        const original = props.original;
         let state: IState = {
-            country: Countries[0].iso,
-            message: "",
-            url: "",
+            country: !!original ? original.country : Countries[0].iso,
+            message: !!original ? original.message : "",
+            url: !!original ? original.url : "",
         }
 
         if (!useSetState) {
@@ -76,13 +78,14 @@ export default class NewOrderDialog extends Router<IProps, IState> {
         try {
             let result: Geodirect;
 
-            if (1 === 1) {
+            if (!this.props.original) {
                 result = await api.create(geo);
             } else {
-                result = await api.update("-1", geo);
+                result = await api.update(this.props.original._id, geo);
             }
 
             this.props.onRequestClose(result);
+            this.setState({ loading: false });
         } catch (e) {
             const err: ApiError = e;
 
@@ -137,7 +140,7 @@ export default class NewOrderDialog extends Router<IProps, IState> {
                 <form>
                     <div className="form-group">
                         <SelectField floatingLabelText="When a visitor is from this country:" value={country.iso} onChange={(e, i, v) => this.setState({ country: v })} fullWidth={true}>
-                            {Countries.map(c => <MenuItem value={c.iso} primaryText={c.name} />)}
+                            {Countries.map(c => <MenuItem key={c.iso} value={c.iso} primaryText={c.name} />)}
                         </SelectField>
                     </div>
                     <div className="form-group">
@@ -165,7 +168,7 @@ export default class NewOrderDialog extends Router<IProps, IState> {
                 open={props.open || false}
                 actions={actions}
                 modal={true}
-                title="New Geodirect"
+                title={ !!this.props.original ? "Edit Geodirect" : "New Geodirect"}
                 onRequestClose={e => props.onRequestClose()}>
                 {form}
                 {this.state.error ? <p className="error dialog">{this.state.error}</p> : null}
