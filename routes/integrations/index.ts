@@ -5,9 +5,9 @@ import { Express } from "express";
 import inspect from "../../modules/inspect";
 import { users } from "../../modules/database";
 import { RouterFunction, User } from "gearworks";
-import Plans, { findPlan } from "../../modules/plans";
-import { CreateOrderRequest } from "gearworks/requests";
-import { Auth, Shops, Webhooks, RecurringCharges } from "shopify-prime";
+import { ActivatePlanRequest } from "gearworks/requests";
+import Plans, { findPlan, getPlanTerms } from "../../modules/plans";
+import { Auth, Shops, Webhooks, RecurringCharges, Models } from "shopify-prime";
 import { DEFAULT_SCOPES, SHOPIFY_API_KEY, SHOPIFY_SECRET_KEY, ISLIVE, APP_NAME } from "../../modules/constants";
 
 export const BASE_PATH = "/api/v1/integrations/";
@@ -121,18 +121,81 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             const planId: string = req.validatedQuery.plan_id;
             const redirect = req.validatedQuery.redirect_path;
             const plan = findPlan(planId);
-
-            inspect({redirect, full: req.domainWithProtocol + redirect});
-
             const charge = await api.create({
-                trial_days: plan.trialDays,
+                trial_days: 0,
                 name: `${APP_NAME} ${plan.name} plan`,
-                price: plan.price,
+                capped_amount: plan.price_cap,
+                price: undefined,
+                terms: getPlanTerms(plan),
                 test: !ISLIVE,
-                return_url: req.domainWithProtocol + redirect + `?${qs.stringify({plan_id: plan.id})}`,
+                return_url: req.domainWithProtocol + redirect + `?${qs.stringify({ plan_id: plan.id })}`,
             });
 
             res.json({ url: charge.confirmation_url });
+
+            return next();
+        }
+    })
+
+    route({
+        method: "get",
+        path: BASE_PATH + "shopify/plan",
+        requireAuth: true,
+        handler: async function (req, res, next) {
+            const api = new RecurringCharges(req.user.shopify_domain, req.user.shopify_access_token);
+            const charge = await api.get(req.user.charge_id);
+
+            res.json(charge);
+
+            return next();
+        }
+    })
+
+    route({
+        method: "put",
+        path: BASE_PATH + "shopify/plan",
+        requireAuth: true,
+        bodyValidation: joi.object({
+            plan_id: joi.string().only(Plans.map(p => p.id)).required(),
+            charge_id: joi.number().required(),
+        }),
+        handler: async function (req, res, next) {
+            const model = req.validatedBody as ActivatePlanRequest;
+            const plan = Plans.find(p => p.id === model.plan_id);
+
+            const service = new RecurringCharges(req.user.shopify_domain, req.user.shopify_access_token);
+            let charge: Models.RecurringCharge;
+
+            try {
+                charge = await service.get(model.charge_id);
+
+                //Charges can only be activated when they've been accepted
+                if (charge.status !== "accepted") {
+                    return next(boom.expectationFailed(`Charge ${model.charge_id} has not been accepted.`));
+                }
+            } catch (e) {
+                console.error("Recurring charge error", e);
+
+                // Charge has expired or was declined. Send the user to select a new plan.
+                return next(boom.expectationFailed("Could not find recurring charge. It may have expired or been declined."));
+            }
+
+            await service.activate(charge.id);
+
+            // Update the user's planid
+            let user = await users.get(req.user._id);
+            user.plan_id = plan.id;
+            user.charge_id = charge.id;
+
+            try {
+                user = await users.put(user._id, user, user._rev);
+            } catch (e) {
+                console.error(`Activated new subscription plan but failed to update user ${req.user._id}'s plan id.`, e);
+
+                return next(e);
+            }
+
+            await res.withSessionToken(user);
 
             return next();
         }

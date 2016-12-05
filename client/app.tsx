@@ -131,8 +131,8 @@ export function MinimalMain(props) {
                             <Route path={Paths.signup.finalizeIntegration} component={FinalizeIntegrationPage} onEnter={args => document.title = "Connecting your Shopify store."} />
                         </Route>
                         <Route onEnter={checkAuthState(true, false)}>
-                            <Route path={Paths.plans.index} component={SelectPlanPage} onEnter={args => document.title = "Select a plan."} />
-                            <Route path={Paths.plans.select} component={FinalizePlanPage} onEnter={args => document.title="Selecting your plan."} />
+                            <Route path={Paths.plans.index} component={SelectPlanPage} onEnter={args => document.title = "How does the billing work?"} />
+                            <Route path={Paths.plans.select} component={FinalizePlanPage} onEnter={args => document.title="Starting your subscription."} />
                         </Route>
                         <Route path={"/error/:statusCode"} component={ErrorPage} onEnter={(args) => {document.title = `Error ${args.params["statusCode"]} | ${APP_NAME}`}} />
                     </Route>

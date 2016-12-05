@@ -2,7 +2,7 @@ import { Geodirect } from "gearworks";
 import { Models } from "shopify-prime";
 import { resolve, reject } from "bluebird";
 import { stringify as queryString } from "qs";
-import { CreateOrderRequest } from "gearworks/requests";
+import { CreateOrderRequest, ActivatePlanRequest } from "gearworks/requests";
 
 // Interfaces
 import Order = Models.Order;
@@ -115,9 +115,13 @@ export class Shopify extends BaseService {
 
     public createAuthorizationUrl = (data: { shop_domain: string; redirect_url: string }) => this.sendRequest<{ url: string }>("url", "GET", data);
 
+    public authorize = (data: { code: string, shop: string, hmac: string, state?: string }, fullQueryString: string) => this.sendRequest<SessionTokenResponse>(`authorize?${fullQueryString.replace(/^\?/, "")}`, "POST", data);
+
     public createPlanUrl = (data: { plan_id: string; redirect_path: string; }) => this.sendRequest<{ url: string }>("plan/url", "GET", data);
 
-    public authorize = (data: { code: string, shop: string, hmac: string, state?: string }, fullQueryString: string) => this.sendRequest<SessionTokenResponse>(`authorize?${fullQueryString.replace(/^\?/, "")}`, "POST", data);
+    public getPlanDetails = () => this.sendRequest<Models.RecurringCharge>("plan", "GET");
+
+    public activatePlan = (data: ActivatePlanRequest) => this.sendRequest<SessionTokenResponse>("plan", "PUT", data);
 }
 
 export class Sessions extends BaseService {

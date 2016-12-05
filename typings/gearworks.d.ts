@@ -162,24 +162,20 @@ declare module "gearworks" {
 
         name: string;
 
-        price: number;
+        /**
+         * The price per 100 Geodirect prompts.
+         */
+        price_per_100: number;
 
         /**
-         * Maximum number of visitors allowed each month before geodirect stops prompting visitors.
+         * How many free prompts are included with this plan before usage charges start to accrue.
          */
-        limit: number;
-
-        trialDays: number;
+        number_of_free_prompts: number;
 
         /**
-         * A humanized description that will be displayed on the pricing page.
+         * The maximum monthly price allowed.
          */
-        description: string;
-
-        /**
-         * A custom list of in-app permissions available to this plan.
-         */
-        permissions: string[];
+        price_cap: number;
     }
 
     export interface Geodirect extends CouchDoc {

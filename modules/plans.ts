@@ -7,30 +7,10 @@ import { Plan } from "gearworks";
 const Plans: Plan[] = [
     {
         id: "0696abc9-43e2-4915-822a-895de5ede035",
-        price: 0.00,
-        name: "Free",
-        limit: 500,
-        trialDays: 21,
-        description: "In tempor aliqua sint ex duis nostrud ipsum enim fugiat excepteur sint mollit ex enim.",
-        permissions: []
-    },
-    {
-        id: "d3212ae5-78a9-4a8b-a6f4-01445b9b4f0a",
-        price: 9.00,
+        price_per_100: 1.00,
         name: "Basic",
-        limit: 5000,
-        trialDays: 21,
-        description: "Quis ullamco fugiat laboris ipsum proident tempor Lorem ipsum eiusmod incididunt irure.",
-        permissions: []
-    },
-    {
-        id: "46214500-1a92-445d-af1e-45207ba8c4ed",
-        price: 29.00,
-        name: "Unlimited",
-        limit: 0,
-        trialDays: 21,
-        description: "Ipsum ullamco aute ea reprehenderit consectetur velit quis elit nisi sunt reprehenderit.",
-        permissions: []
+        number_of_free_prompts: 100,
+        price_cap: 25.00
     },
 ]
 
@@ -55,4 +35,18 @@ export function findPlan(id: string) {
     }
 
     return plan;
+}
+
+/**
+ * Builds a simple plan description string in the format of `100 free prompts each month, then $1.00 USD per 100 prompts.`
+ */
+export function getPlanDescription(p: Plan) {
+    return `${p.number_of_free_prompts} free prompts each month, then $${p.price_per_100.toFixed(2)} USD per 100 prompts.`;
+}
+
+/**
+ * Builds a UsageCharge terms string for use with Shopify's usage charge API.
+ */
+export function getPlanTerms(p: Plan) {
+    return `Your first ${p.number_of_free_prompts} prompts each month are free, then your shop will be charged $${p.price_per_100.toFixed(2)} USD per 100 prompts`;
 }

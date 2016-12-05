@@ -1,8 +1,13 @@
 import Dialog from "./dialog";
 import * as React from 'react';
+import { Plan } from "gearworks";
 import * as gravatar from "gravatar";
 import { observer } from "mobx-react";
+import { Models } from "shopify-prime";
 import Observer from "../../components/observer";
+import { APP_NAME } from "../../../modules/constants";
+import { Shopify, ApiError } from "../../../modules/api";
+import Plans, { findPlan, getPlanDescription } from "../../../modules/plans";
 import {
     Card,
     CardHeader,
@@ -19,6 +24,11 @@ export interface IProps {
 export interface IState {
     emailDialogOpen?: boolean;
     passwordDialogOpen?: boolean;
+    planDialogOpen?: boolean;
+    charge?: Models.RecurringCharge;
+    planError?: string;
+    loading?: boolean;
+    hitsThisMonth?: number;
 }
 
 @observer(["auth"])
@@ -31,10 +41,14 @@ export default class AccountPage extends Observer<IProps, IState> {
 
     public state: IState = {};
 
+    private planBox: HTMLSelectElement;
+
     //#region Utility functions
 
     private configureState(props: IProps, useSetState: boolean) {
-        let state: IState = {}
+        let state: IState = {
+            loading: true,
+        }
 
         if (!useSetState) {
             this.state = state;
@@ -47,8 +61,32 @@ export default class AccountPage extends Observer<IProps, IState> {
 
     //#endregion
 
-    public componentDidMount() {
+    private async changePlan() {
 
+    }
+
+    private async refreshData() {
+        await this.setStateAsync({ loading: true });
+
+        const api = new Shopify(this.props.auth.token);
+
+        try {
+            const charge = await api.getPlanDetails();
+
+            await this.setStateAsync({ charge, hitsThisMonth: 100, loading: false, });
+        } catch (e) {
+            const err: ApiError = e;
+
+            if (err.unauthorized && this.handleUnauthorized(this.PATHS.account.index)) {
+                return;
+            }
+
+            this.setState({ planError: err.message });
+        }
+    }
+
+    public async componentDidMount() {
+        this.refreshData();
     }
 
     public componentDidUpdate() {
@@ -57,19 +95,70 @@ export default class AccountPage extends Observer<IProps, IState> {
 
     public componentWillReceiveProps(props: IProps) {
         this.configureState(props, true);
+        this.refreshData();
     }
 
+    private BillingCardBody() {
+        const plan = findPlan(this.props.auth.session.plan_id);
+        const { charge, planError, loading } = this.state;
+        let body: JSX.Element;
+
+        if (loading) {
+            body = (
+                <div className="text-center" style={{ "padding": "4rem 0" }}>
+                    <i className="fa fa-spinner fa-spin fa-4x color" />
+                    <p>{"Loading billing information, please wait."}</p>
+                </div>
+            )
+        } else {
+            body = (
+                <div>
+                    <p className="underline">
+                        {"Billing To"}
+                        <span>{"Your Shopify Account"}</span>
+                    </p>
+                    <p className="underline">
+                        {"Next Charge"}
+                        <span>{new Date(charge.billing_on).toLocaleDateString()}</span>
+                    </p>
+                    <p className="underline">
+                        {"Prompts This Month"}
+                        <span>{this.state.hitsThisMonth}</span>
+                    </p>
+                    <p className="underline">
+                        {"Charges This Month"}
+                        <span>{`$${charge.balance_used.toFixed(2)} USD`}</span>
+                    </p>
+                    <p>
+                        {`To cancel your subscription, just uninstall the ${APP_NAME} app from your Shopify admin dashboard.`}
+                    </p>
+                </div>
+            )
+        }
+
+        return (
+            <Card>
+                <CardHeader title={`${APP_NAME} ${plan.name} Plan`} avatar={"/images/shopify.png"} subtitle={getPlanDescription(plan)} />
+                <CardText>
+                    {body}
+                    {planError ? <p className="error">{planError}</p> : null}
+                </CardText>
+            </Card>
+        )
+    }
+
+
     public render() {
-        const {emailDialogOpen, passwordDialogOpen} = this.state;
-        const props = this.props;
-        const auth = props.auth.session;
+        const {emailDialogOpen, passwordDialogOpen, planDialogOpen} = this.state;
+        const auth = this.props.auth.session;
+        const plan = findPlan(auth.plan_id);
 
         return (
             <div>
                 <section id="account" className="content">
                     <h2 className="content-title">{"Your Account"}</h2>
                     <div className="pure-g">
-                        <div className="pure-u-12-24">
+                        <div className="pure-u-11-24">
                             <Card>
                                 <CardHeader title={auth.shopify_shop_name} subtitle={auth._id} avatar={gravatar.url(auth._id)} />
                                 <CardText>
@@ -81,6 +170,10 @@ export default class AccountPage extends Observer<IProps, IState> {
                                     <RaisedButton label="Change Login Password" style={{ float: "right" }} onTouchTap={e => this.setState({ passwordDialogOpen: true })} />
                                 </CardActions>
                             </Card>
+                        </div>
+                        <div className="pure-u-2-24" />
+                        <div className="pure-u-11-24">
+                            {this.BillingCardBody()}
                         </div>
                     </div>
                     <Dialog open={emailDialogOpen} type="email" onRequestClose={() => this.setState({ emailDialogOpen: false })} />

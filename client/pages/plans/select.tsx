@@ -41,18 +41,18 @@ export default class SelectPlanPage extends Router<IProps, IState> {
     //#endregion
 
     public async componentDidMount() {
-        const qs = parse(window.location.search.replace(/^\?/i, "")) as { code: string, shop: string, hmac: string, state?: string };
+        const qs = parse(window.location.search.replace(/^\?/i, "")) as { plan_id: string, charge_id: number };
         const api = new Shopify(store.token);
 
         try {
-            const result = await api.authorize(qs, window.location.search);
+            const result = await api.activatePlan(qs);
 
             store.login(result.token);
             this.context.router.push(this.PATHS.home.index);
         } catch (e) {
             const err: ApiError = e;
 
-            if (err.unauthorized && this.handleUnauthorized(this.PATHS.signup.finalizeIntegration, qs)) {
+            if (err.unauthorized && this.handleUnauthorized(this.PATHS.plans.select, qs)) {
                 return;
             }
 
@@ -63,7 +63,7 @@ export default class SelectPlanPage extends Router<IProps, IState> {
     private tryAgain(e: React.FormEvent<any> | React.MouseEvent<any>) {
         e.preventDefault();
 
-        this.context.router.push(this.PATHS.signup.integrate);
+        this.context.router.push(this.PATHS.plans.index);
     }
 
     public componentDidUpdate() {
@@ -87,7 +87,7 @@ export default class SelectPlanPage extends Router<IProps, IState> {
             <section id="signup">
                 <div className="pure-g center-children">
                     <div className="pure-u-12-24">
-                        <Box title={`Starting your free trial.`} description="Please wait." footer={action} error={error}>
+                        <Box title={`Confirming your subscription.`} description="Please wait." footer={action} error={error}>
                             <div style={{ paddingTop: padding, paddingBottom: padding, textAlign: "center" }}>
                                 {!error ? <CircularProgress /> : <FontIcon className="fa fa-frown-o" color={blueGrey700} style={{ fontSize: "6em" }} />}
                             </div>

@@ -43,10 +43,11 @@ async function startServer(hostname: string, port: number, securePort: number) {
         }));
 
         app.use(require('webpack-hot-middleware')(compiler));
-    } else {
-        // Any request to the /dist path should server a static file from the dist folder.
-        app.use("/dist", express.static("dist"));
     }
+
+    // Any request to the /dist or /images paths should serve static files.
+    app.use("/dist", express.static("dist"));
+    app.use("/images", express.static("images"));
 
     // Let express trust the proxy that may be used on certain hosts (e.g. Azure and other cloud hosts). 
     // Enabling this will replace the `request.protocol` with the protocol that was requested by the end user, 

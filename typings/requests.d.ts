@@ -13,4 +13,13 @@ declare module "gearworks/requests" {
     }
 
     //#endregion
+
+    // #region /users
+
+    export interface ActivatePlanRequest {
+        plan_id: string;
+        charge_id: number;
+    }
+
+    //#endregion
 }
