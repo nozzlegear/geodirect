@@ -29,6 +29,10 @@ import SignupPage from "./pages/signup";
 import IntegratePage from "./pages/signup/integrate";
 import FinalizeIntegrationPage from "./pages/signup/finalize";
 
+// Subscription plan pages
+import SelectPlanPage from "./pages/plans";
+import FinalizePlanPage from "./pages/plans/select";
+
 // Home components
 import HomePage from "./pages/home";
 
@@ -75,7 +79,9 @@ export function MinimalMain(props) {
         <main id="app" className="minimal"> 
             <div id="body">
                 <div className="page-header">
-                    <Link to={Paths.home.index}>{APP_NAME}</Link>
+                    <h1>
+                        <Link to={Paths.home.index}>{APP_NAME}</Link>
+                    </h1>
                 </div>
                 {React.cloneElement(props.children as any, props)}
             </div>
@@ -84,12 +90,14 @@ export function MinimalMain(props) {
 }
 
 {
-    function checkAuthState(requireShopifyIntegration: boolean) {
+    function checkAuthState(requireShopifyIntegration: boolean, requireSubscriptionPlan: boolean) {
         return (args: Router.RouterState, replace: Router.RedirectFunction, callback: Function) => {
             if (AuthStore.sessionIsInvalid) {
                 replace(Paths.auth.login + window.location.search);
             } else if (requireShopifyIntegration && !AuthStore.session.shopify_access_token) {
                 replace(Paths.signup.integrate + window.location.search);
+            } else if(requireSubscriptionPlan && !AuthStore.session.charge_id) {
+                replace(Paths.plans.index + window.location.search);
             }
 
             callback();
@@ -108,7 +116,7 @@ export function MinimalMain(props) {
             <MuiThemeProvider muiTheme={theme}>
                 <Router history={browserHistory}>
                     <Route component={Main}>
-                        <Route onEnter={checkAuthState(true)} >
+                        <Route onEnter={checkAuthState(true, true)} >
                             <Route path={Paths.home.index} component={HomePage} onEnter={args => document.title = APP_NAME} />
                             <Route path={Paths.account.index} component={AccountPage} onEnter={args => document.title = "Your Account"} />
                         </Route>
@@ -118,9 +126,13 @@ export function MinimalMain(props) {
                         <Route path={Paths.auth.forgotPassword} component={ForgotPasswordPage} onEnter={args => document.title = "Forgot your password?"} />
                         <Route path={Paths.auth.resetPassword} component={ResetPasswordPage} onEnter={args => document.title = "Reset your password."} /> 
                         <Route path={Paths.signup.index} component={SignupPage} onEnter={args => document.title = "Signup"} />
-                        <Route onEnter={checkAuthState(false)}>
-                            <Route path={Paths.signup.integrate} component={IntegratePage} onEnter={args => document.title = "Connect your Shopify store"} />
-                            <Route path={Paths.signup.finalizeIntegration} component={FinalizeIntegrationPage} onEnter={args => document.title = "Connecting your Shopify store"} />
+                        <Route onEnter={checkAuthState(false, false)}>
+                            <Route path={Paths.signup.integrate} component={IntegratePage} onEnter={args => document.title = "Connect your Shopify store."} />
+                            <Route path={Paths.signup.finalizeIntegration} component={FinalizeIntegrationPage} onEnter={args => document.title = "Connecting your Shopify store."} />
+                        </Route>
+                        <Route onEnter={checkAuthState(true, false)}>
+                            <Route path={Paths.plans.index} component={SelectPlanPage} onEnter={args => document.title = "Select a plan."} />
+                            <Route path={Paths.plans.select} component={FinalizePlanPage} onEnter={args => document.title="Selecting your plan."} />
                         </Route>
                         <Route path={"/error/:statusCode"} component={ErrorPage} onEnter={(args) => {document.title = `Error ${args.params["statusCode"]} | ${APP_NAME}`}} />
                     </Route>

@@ -15,7 +15,11 @@ export const Paths = {
         index: "/signup",
         integrate: "/signup/integrate",
         finalizeIntegration: "/signup/integrate/finalize",
-    }
+    },
+    plans: {
+        index: "/plans",
+        select: "/plans/select",
+    } 
 }
 
 export default Paths;
@@ -64,6 +68,14 @@ export function getPathRegex(path: string) {
 
         case Paths.account.index:
             output = /\/account\/?$/i;
+        break;
+
+        case Paths.plans.index:
+            output = /\/plans\/?$/i;
+        break;
+
+        case Paths.plans.select:
+            output = /\/plans\/select\/?$/i;
         break;
     }
 

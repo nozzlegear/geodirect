@@ -1,11 +1,14 @@
+import * as qs from "qs";
 import * as joi from "joi";
 import * as boom from "boom";
 import { Express } from "express";
+import inspect from "../../modules/inspect";
 import { users } from "../../modules/database";
 import { RouterFunction, User } from "gearworks";
+import Plans, { findPlan } from "../../modules/plans";
 import { CreateOrderRequest } from "gearworks/requests";
-import { Auth, Shops, Webhooks, Orders } from "shopify-prime";
-import { DEFAULT_SCOPES, SHOPIFY_API_KEY, SHOPIFY_SECRET_KEY, ISLIVE } from "../../modules/constants";
+import { Auth, Shops, Webhooks, RecurringCharges } from "shopify-prime";
+import { DEFAULT_SCOPES, SHOPIFY_API_KEY, SHOPIFY_SECRET_KEY, ISLIVE, APP_NAME } from "../../modules/constants";
 
 export const BASE_PATH = "/api/v1/integrations/";
 
@@ -107,118 +110,29 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
     route({
         method: "get",
-        path: BASE_PATH + "shopify/orders",
+        path: BASE_PATH + "shopify/plan/url",
         requireAuth: true,
         queryValidation: joi.object({
-            limit: joi.number().default(50),
-            page: joi.number().greater(0).default(1),
-            status: joi.string().only("any").default("any"),
-        }).unknown(true),
-        handler: async function (req, res, next) {
-            const service = new Orders(req.user.shopify_domain, req.user.shopify_access_token);
-            const orders = await service.list(req.validatedQuery);
-
-            res.json(orders);
-
-            return next();
-        }
-    })
-
-    route({
-        method: "post",
-        path: BASE_PATH + "shopify/orders",
-        requireAuth: true,
-        bodyValidation: joi.object({
-            city: joi.string().required(),
-            email: joi.string().required(),
-            line_item: joi.string().required(),
-            name: joi.string().required(),
-            quantity: joi.number().required(),
-            state: joi.string().required(),
-            street: joi.string().required(),
-            zip: joi.string().required(),
+            plan_id: joi.string().only(Plans.map(p => p.id)).required(),
+            redirect_path: joi.string().required(),
         }),
         handler: async function (req, res, next) {
-            const model = req.validatedBody as CreateOrderRequest;
-            const service = new Orders(req.user.shopify_domain, req.user.shopify_access_token);
-            const order = await service.create({
-                billing_address: {
-                    address1: model.street,
-                    city: model.city,
-                    province: model.state,
-                    zip: model.zip,
-                    name: model.name,
-                    country_code: "US",
-                    default: true,
-                },
-                line_items: [
-                    {
-                        name: model.line_item,
-                        title: model.line_item,
-                        quantity: model.quantity,
-                        price: 5,
-                    },
-                ],
-                financial_status: "authorized",
-                email: model.email,
+            const api = new RecurringCharges(req.user.shopify_domain, req.user.shopify_access_token);
+            const planId: string = req.validatedQuery.plan_id;
+            const redirect = req.validatedQuery.redirect_path;
+            const plan = findPlan(planId);
+
+            inspect({redirect, full: req.domainWithProtocol + redirect});
+
+            const charge = await api.create({
+                trial_days: plan.trialDays,
+                name: `${APP_NAME} ${plan.name} plan`,
+                price: plan.price,
+                test: !ISLIVE,
+                return_url: req.domainWithProtocol + redirect + `?${qs.stringify({plan_id: plan.id})}`,
             });
 
-            res.json(order);
-
-            return next();
-        }
-    })
-
-    route({
-        method: "post",
-        path: BASE_PATH + "shopify/orders/:id/open",
-        requireAuth: true,
-        paramValidation: joi.object({
-            id: joi.number().required()
-        }),
-        handler: async function (req, res, next) {
-            const id = req.validatedParams.id as number;
-            const service = new Orders(req.user.shopify_domain, req.user.shopify_access_token);
-            const order = await service.open(id);
-
-            res.json(order);
-
-            return next();
-        }
-    })
-
-    route({
-        method: "post",
-        path: BASE_PATH + "shopify/orders/:id/close",
-        requireAuth: true,
-        paramValidation: joi.object({
-            id: joi.number().required()
-        }),
-        handler: async function (req, res, next) {
-            const id = req.validatedParams.id as number;
-            const service = new Orders(req.user.shopify_domain, req.user.shopify_access_token);
-            const order = await service.close(id);
-
-            res.json(order);
-
-            return next();
-        }
-    })
-
-    route({
-        method: "delete",
-        path: BASE_PATH + "shopify/orders/:id",
-        requireAuth: true,
-        paramValidation: joi.object({
-            id: joi.number().required()
-        }),
-        handler: async function (req, res, next) {
-            const id = req.validatedParams.id as number;
-            const service = new Orders(req.user.shopify_domain, req.user.shopify_access_token);
-
-            await service.delete(id);
-
-            res.json({});
+            res.json({ url: charge.confirmation_url });
 
             return next();
         }

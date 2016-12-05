@@ -164,6 +164,11 @@ declare module "gearworks" {
 
         price: number;
 
+        /**
+         * Maximum number of visitors allowed each month before geodirect stops prompting visitors.
+         */
+        limit: number;
+
         trialDays: number;
 
         /**
