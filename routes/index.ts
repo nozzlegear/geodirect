@@ -1,3 +1,4 @@
+import * as cors from "cors";
 import { Auth } from "shopify-prime";
 import * as Bluebird from "bluebird";
 import { Schema, validate } from "joi";
@@ -55,7 +56,15 @@ export default async function registerAllRoutes(app: Express) {
 
     // A custom routing function that handles authentication and body/query/param validation
     const route: RouterFunction = (config) => {
-        app[config.method.toLowerCase()](config.path, async function (req: RouterRequest, res: RouterResponse, next: NextFunction) {
+        const corsMiddleware = config.cors ? cors() : (req, res, next) => next();
+
+        if (config.cors) {
+            // Add an OPTIONS request handler for the path. All non-trivial CORS requests from browsers 
+            // send an OPTIONS preflight request.
+            app.options(config.path, cors);
+        }
+
+        app[config.method.toLowerCase()](config.path, corsMiddleware, async function (req: RouterRequest, res: RouterResponse, next: NextFunction) {
             req.domainWithProtocol = `${req.protocol}://${req.hostname}` + (req.hostname === "localhost" ? ":3000" : "");
 
             if (config.requireAuth) {

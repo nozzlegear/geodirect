@@ -98,7 +98,7 @@ async function startServer(hostname: string, port: number, securePort: number) {
         challenges: { 'tls-sni-01': require('le-challenge-sni').create({ webrootPath: lexTempDir }) },
         challengeType: 'tls-sni-01',
         store: require('le-store-certbot').create({ webrootPath: lexTempDir }),
-        approveDomains: (options: { email: string, agreeTos: boolean, domains: string[] }, certs, cb) => {
+        approveDomains: !ISLIVE ? ["127.0.0.1"] : (options: { email: string, agreeTos: boolean, domains: string[] }, certs, cb) => {
             options.email = `support@${EMAIL_DOMAIN}`;
             options.agreeTos = true;
             options.domains = (certs && certs.altnames) || options.domains;

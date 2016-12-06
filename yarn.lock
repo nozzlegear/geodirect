@@ -26,6 +26,12 @@
   version "0.0.32"
   resolved "https://registry.yarnpkg.com/@types/classnames/-/classnames-0.0.32.tgz#449abcd9a826807811ef101e58df9f83cfc61713"
 
+"@types/cors@^0.0.33":
+  version "0.0.33"
+  resolved "https://registry.yarnpkg.com/@types/cors/-/cors-0.0.33.tgz#05dc50760b93201b81c54a94fb757f21144f5e61"
+  dependencies:
+    "@types/express" "*"
+
 "@types/express", "@types/express@*":
   version "4.0.33"
   resolved "https://registry.yarnpkg.com/@types/express/-/express-4.0.33.tgz#9212b6c67e02e09ee9f80740ded04306050739ab"
@@ -142,6 +148,10 @@
   dependencies:
     "@types/express-serve-static-core" "*"
     "@types/mime" "*"
+
+"@types/shopify@github:nozzlegear/shopify.d.ts#8d6a7cc":
+  version "1.0.5"
+  resolved "https://codeload.github.com/nozzlegear/shopify.d.ts/tar.gz/8d6a7cc"
 
 "@types/whatwg-fetch":
   version "0.0.32"
@@ -1571,6 +1581,12 @@ core-js@^2.4.0:
 core-util-is@~1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/core-util-is/-/core-util-is-1.0.2.tgz#b5fd54220aa2bc5ab57aab7140c940754503c1a7"
+
+cors@^2.8.1:
+  version "2.8.1"
+  resolved "https://registry.yarnpkg.com/cors/-/cors-2.8.1.tgz#6181aa56abb45a2825be3304703747ae4e9d2383"
+  dependencies:
+    vary "^1"
 
 create-error-class@^3.0.1:
   version "3.0.2"
@@ -5609,7 +5625,7 @@ value-equal@^0.1.1:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/value-equal/-/value-equal-0.1.1.tgz#b174df21f203c81e17f2e4d59d3a900024cbef7b"
 
-vary@~1.1.0:
+vary@^1, vary@~1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/vary/-/vary-1.1.0.tgz#e1e5affbbd16ae768dd2674394b9ad3022653140"
 

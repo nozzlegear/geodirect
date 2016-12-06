@@ -183,7 +183,7 @@ export default class HomePage extends Observer<IProps, IState> {
         let error: string = undefined;
 
         try {
-            const geos = await api.list();
+            const geos = await api.list({shop_id: this.props.auth.session.shopify_shop_id});
             geosByRegion = this.mapGeosToRegions(geos);
         } catch (e) {
             const err: ApiError = e;

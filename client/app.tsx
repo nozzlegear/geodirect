@@ -1,5 +1,6 @@
-// Import the babel-polyfill at the top of the application
-const polyfill = require("babel-polyfill");
+// Import the babel and fetch polyfills at the top of the application
+const babelPolyfill = require("babel-polyfill");
+const fetchPolyfill = require("whatwg-fetch");
 
 // Material-UI needs the react-tap-event-plugin activated
 const injectTapEventPlugin = require("react-tap-event-plugin");

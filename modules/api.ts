@@ -143,7 +143,7 @@ export class Geodirects extends BaseService {
 
     public get = (id: string) => this.sendRequest<Geodirect>(`${id}`, "GET");
 
-    public list = () => this.sendRequest<Geodirect[]>(``, "GET");
+    public list = (data: { shop_id: number }) => this.sendRequest<Geodirect[]>(``, "GET", data);
 
     public delete = (id: string) => this.sendRequest<void>(`${id}`, "DELETE");
 }

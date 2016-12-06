@@ -20,9 +20,10 @@ declare module "gearworks" {
     }
 
     export interface RouterFunctionConfig {
-        method: "get" | "post" | "put" | "delete" | "options" | "head",
+        method: "get" | "post" | "put" | "delete" | "head",
         path: string,
         handler: (req: RouterRequest, res: RouterResponse, next: NextFunction) => void | any,
+        cors?: boolean,
         requireAuth?: boolean,
         bodyValidation?: Schema,
         queryValidation?: Schema,

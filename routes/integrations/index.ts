@@ -7,7 +7,7 @@ import { users } from "../../modules/database";
 import { RouterFunction, User } from "gearworks";
 import { ActivatePlanRequest } from "gearworks/requests";
 import Plans, { findPlan, getPlanTerms } from "../../modules/plans";
-import { Auth, Shops, Webhooks, RecurringCharges, Models } from "shopify-prime";
+import { Auth, Shops, Webhooks, RecurringCharges, Models, ScriptTags } from "shopify-prime";
 import { DEFAULT_SCOPES, SHOPIFY_API_KEY, SHOPIFY_SECRET_KEY, ISLIVE, APP_NAME } from "../../modules/constants";
 
 export const BASE_PATH = "/api/v1/integrations/";
@@ -196,6 +196,27 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             }
 
             await res.withSessionToken(user);
+
+            if (/^https/i.test(req.domainWithProtocol)) {
+                const api = new ScriptTags(user.shopify_domain, user.shopify_access_token);
+                const src = req.domainWithProtocol + "/dist/tag.js";
+
+                try {
+                    // First check if the script tag already exists
+                    const tags = await api.list({
+                        fields: "src"
+                    });
+
+                    if (!tags.some(t => t.src === src)) {
+                        // Src must always be https
+                        const tag = await api.create({ src: src.replace(/^https?/i, "https"), event: "onload" });
+                    }
+                } catch (e) {
+                    inspect(`Failed to create script tag src ${src} for shop ${user.shopify_shop_id}`, e);
+                }
+            } else {
+                console.warn(`Cannot create a Shopify script tag for a non-https URL (${req.domainWithProtocol}).`);
+            }
 
             return next();
         }

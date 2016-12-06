@@ -21,6 +21,7 @@ const config = {
     entry: [
         dev ? 'webpack-hot-middleware/client' : undefined,
         "./client/app",
+        "./tag/tag",
     ].filter(arg => !!arg),
     output: {
         path: path.join(__dirname, "dist"),

@@ -1,5 +1,6 @@
 import * as joi from "joi";
 import * as boom from "boom";
+import * as cors from "cors";
 import { Express } from "express";
 import inspect from "../../modules/inspect";
 import { geodirects } from "../../modules/database";
@@ -13,11 +14,16 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
     route({
         method: "get",
         path: BASE_PATH,
-        requireAuth: true,
+        queryValidation: joi.object({
+            shop_id: joi.number().required(),
+        }),
+        cors: true,
+        requireAuth: false, // This route is also used by the tag script, where authentication is impossible.
         handler: async function (req, res, next) {
+            const shop_id = req.validatedQuery.shop_id;
             const list = await geodirects.find({
                 selector: {
-                    shop_id: req.user.shopify_shop_id
+                    shop_id: shop_id,
                 }
             });
 
