@@ -45,7 +45,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             const geo = await geodirects.get(id);
 
             if (geo.shop_id !== req.user.shopify_shop_id) {
-                return next(boom.notFound(`No geodirect with id of ${id} belongong to shop id ${req.user.shopify_shop_id}.`));
+                return next(boom.notFound(`No geodirect with id of ${id} belonging to shop id ${req.user.shopify_shop_id}.`));
             }
 
             res.json(geo);
