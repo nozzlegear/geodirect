@@ -1,0 +1,18 @@
+<h2>Testing the Geodirect ScriptTag</h2>
+
+<p>
+    Shopify only allows creating a ScriptTag that points to an https source. There are a bunch of hoops to jump through to get that to work seamlessly when developing on localhost, even with Let's Encrypt. I've set this app up to only create a script tag when on a live server, and have set up Let's Encrypt to encrypt `https://127.0.0.1:3001` (it can't encrypt localhost). However, when using Let's Encrypt for that address, the app cannot complete regular SSL handshake connections to other sites, which means it cannot connect to the Shopify API to create a script tag in the first place.
+</p>
+
+<p>
+    Instead of adding more hoops to the development process, I've created the following JS bookmarklet that will just load the script tag from your development machine over HTTPS. Just drag the link below to your bookmark bar, then press it when you're testing your script on a Shopify store.
+</p>
+
+<p>
+    <a href='javascript:(function(){const script = document.createElement("script");script.type="text/javascript";script.src="https://127.0.0.1:3001/dist/tag.js";script.onload=()=>{console.log("Script loaded into DOM from https://127.0.0.1:3001 via Gearworks script loading bookmark");};document.body.appendChild(script);}())'>Load Geodirect ScriptTag</a> 
+    <-- Drag this link to your bookmark bar.
+</p>
+
+<p>
+    Note: You'll need to visit `https://127.0.0.1:3001` when your server is running and accept the SSL certificate warning. If you don't, the script tag won't load even with the bookmarklet.
+</p>
