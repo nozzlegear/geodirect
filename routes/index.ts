@@ -11,6 +11,7 @@ import { AUTH_HEADER_NAME, JWT_SECRET_KEY, SEALABLE_USER_PROPERTIES, SHOPIFY_SEC
 import { RouterResponse, RouterFunction, RouterRequest, User, SessionToken, WithSessionTokenFunction } from "gearworks";
 
 // Import routes to register
+import registerIp from "./ip";
 import registerAccounts from "./accounts";
 import registerSessions from "./sessions";
 import registerWebhooks from "./webhooks";
@@ -18,6 +19,7 @@ import registerGeodirects from "./geodirects";
 import registerIntegrations from "./integrations";
 
 const routeRegisters = [
+    registerIp,
     registerAccounts,
     registerSessions,
     registerWebhooks,
@@ -61,7 +63,7 @@ export default async function registerAllRoutes(app: Express) {
         if (config.cors) {
             // Add an OPTIONS request handler for the path. All non-trivial CORS requests from browsers 
             // send an OPTIONS preflight request.
-            app.options(config.path, cors);
+            app.options(config.path, cors());
         }
 
         app[config.method.toLowerCase()](config.path, corsMiddleware, async function (req: RouterRequest, res: RouterResponse, next: NextFunction) {

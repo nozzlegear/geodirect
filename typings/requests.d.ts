@@ -22,4 +22,13 @@ declare module "gearworks/requests" {
     }
 
     //#endregion
+
+    // #region /geodirects
+
+    export interface LogPromptRequest {
+        rev: string;
+        shop_id: number;
+    }
+
+    // #endregion
 }

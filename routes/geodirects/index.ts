@@ -3,8 +3,9 @@ import * as boom from "boom";
 import * as cors from "cors";
 import { Express } from "express";
 import inspect from "../../modules/inspect";
-import { geodirects } from "../../modules/database";
 import { RouterFunction, Geodirect } from "gearworks";
+import { LogPromptRequest } from "gearworks/requests";
+import { geodirects, logs } from "../../modules/database";
 
 export const BASE_PATH = "/api/v1/geodirects/";
 
@@ -101,7 +102,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
                 return next(boom.notFound(`No geodirect with id of ${id} belongong to shop id ${req.user.shopify_shop_id}.`));
             }
 
-            const geo = await geodirects.put(id, Object.assign({}, original, req.validatedBody, {_rev: undefined, _id: undefined}), original._rev);
+            const geo = await geodirects.put(id, Object.assign({}, original, req.validatedBody, { _rev: undefined, _id: undefined }), original._rev);
 
             res.json(geo);
 
@@ -127,6 +128,35 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             await geodirects.delete(id, geo._rev);
 
             res.json({ success: true });
+
+            return next();
+        }
+    })
+
+    route({
+        method: "post",
+        path: BASE_PATH + ":id/log",
+        requireAuth: false,
+        cors: true,
+        paramValidation: joi.object({
+            id: joi.string().required(),
+        }),
+        bodyValidation: joi.object({
+            shop_id: joi.number().required(),
+            rev: joi.string().required(),
+        }),
+        handler: async function (req, res, next) {
+            const {id} = req.validatedParams;
+            const body = req.validatedBody as LogPromptRequest;
+            
+            const log = await logs.post({
+                geodirect_id: id,
+                geodirect_rev: body.rev,
+                shop_id: body.shop_id,
+                timestamp: Date.now()
+            });
+
+            res.json(log);
 
             return next();
         }

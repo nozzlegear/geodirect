@@ -186,4 +186,17 @@ declare module "gearworks" {
         message?: string;
         hits?: number;
     }
+
+    export interface LoggedPrompt extends CouchDoc {
+        /**
+         * A timestamp recording the date and time this prompt was last logged.
+         */
+        timestamp: number;
+
+        geodirect_id: string;
+
+        geodirect_rev: string;
+
+        shop_id: number;
+    }
 }

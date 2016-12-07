@@ -147,3 +147,11 @@ export class Geodirects extends BaseService {
 
     public delete = (id: string) => this.sendRequest<void>(`${id}`, "DELETE");
 }
+
+export class IP extends BaseService {
+    constructor() {
+        super("/api/v1/ip");
+    }
+
+    public get = () => this.sendRequest<{ip: string}>("", "GET");
+}

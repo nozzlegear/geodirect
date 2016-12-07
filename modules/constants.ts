@@ -40,6 +40,16 @@ export const ISLIVE = env.NODE_ENV === "production" || (isBrowser && NODE_ENV ==
 export const AUTH_HEADER_NAME = "x-gearworks-token";
 
 /**
+ * Localstorage key for logging when a user dismisses a prompt without navigating.
+ */
+export const PROMPT_DISMISSED_KEY = `${APP_NAME}-Prompt-Dismissed`;
+
+/**
+ * Localstorage key for logging when a user has been shown a prompt.
+ */
+export const PROMPT_SHOWN_KEY = `${APP_NAME}-Prompt-Navigated`;
+
+/**
  * A list of Shopify authorization scopes that will be requested from the user during app installation.
  */
 export const DEFAULT_SCOPES: Enums.AuthScope[] = ["write_script_tags"];

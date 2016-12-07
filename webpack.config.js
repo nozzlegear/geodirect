@@ -18,16 +18,15 @@ const path         = require("path");
 const dev          = process.argv.some(arg => arg === "--dev");
 
 const config = {
-    entry: [
-        dev ? 'webpack-hot-middleware/client' : undefined,
-        "./client/app",
-        "./tag/tag",
-    ].filter(arg => !!arg),
+    entry: {
+        "app": [ dev ? 'webpack-hot-middleware/client' : undefined, "./client/app", ].filter(arg => !!arg),
+        "tag": "./tag/tag"
+    },
     output: {
         path: path.join(__dirname, "dist"),
         // Important: publicPath must begin with a / but must not end with one. Else hot module replacement won't find updates.
         publicPath: "/dist", 
-        filename: "app.js",
+        filename: "[name].js",
     },
     resolve: {
         root:  process.cwd(),

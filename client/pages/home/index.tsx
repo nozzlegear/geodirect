@@ -161,7 +161,7 @@ export default class HomePage extends Observer<IProps, IState> {
             // Delete the geodirect
             geos.splice(index, 1);
 
-            this.setState({ loading: false,geosByRegion: this.mapGeosToRegions(geos) });
+            this.setState({ loading: false, geosByRegion: this.mapGeosToRegions(geos) });
         } catch (e) {
             const err: ApiError = e;
 
@@ -174,7 +174,7 @@ export default class HomePage extends Observer<IProps, IState> {
     }
 
     private editSelected() {
-        this.setState({dialogOpen: true});
+        this.setState({ dialogOpen: true });
     }
 
     public async componentDidMount() {
@@ -183,7 +183,7 @@ export default class HomePage extends Observer<IProps, IState> {
         let error: string = undefined;
 
         try {
-            const geos = await api.list({shop_id: this.props.auth.session.shopify_shop_id});
+            const geos = await api.list({ shop_id: this.props.auth.session.shopify_shop_id });
             geosByRegion = this.mapGeosToRegions(geos);
         } catch (e) {
             const err: ApiError = e;
@@ -195,7 +195,7 @@ export default class HomePage extends Observer<IProps, IState> {
             error = err.message;
         }
 
-        this.setState({ loading: false,  geosByRegion, error });
+        this.setState({ loading: false, geosByRegion, error });
     }
 
     public componentDidUpdate() {
