@@ -1,32 +1,30 @@
 {
-  "name": "gearworks",
-  "version": "0.1.0",
-  "description": "Gearworks is a template for new Shopify apps using the \"HNTR\" stack — Hapi + Node + Typescript + React. Gearworks is fully equipped for handling Shopify's OAuth process, subscription billing and webhooks.",
+  "name": "geodirect",
+  "version": "1.0.0",
+  "description": "Geodirect is a simple Shopify app for displaying a custom message and redirecting customers to a different URL based on their current location.",
+  "private": true,
   "main": "bin/server.js",
   "scripts": {
-    "build": "tsc -p . && webpack",
-    "watch": "tsc -p . && node ./bin/server.js --dev"
+    "build": "./node_modules/.bin/tsc -p . && ./node_modules/.bin/webpack",
+    "watch": "./node_modules/.bin/tsc -p . && node ./bin/server.js --dev"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nozzlegear/gearworks.git"
+    "url": "git+https://github.com/nozzlegear/geodirect.git"
   },
   "keywords": [
     "gearworks",
     "nozzlegear",
     "shopify",
-    "hntr",
-    "hapi",
-    "node",
-    "typescript",
-    "react"
+    "cetr",
+    "geodirect"
   ],
   "author": "Joshua Harms <joshua@nozzlegear.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/nozzlegear/gearworks/issues"
+    "url": "https://github.com/nozzlegear/geodirect/issues"
   },
-  "homepage": "https://github.com/nozzlegear/gearworks#readme",
+  "homepage": "https://github.com/nozzlegear/geodirect#readme",
   "devDependencies": {
     "@types/bcryptjs": "^2.3.30",
     "@types/bluebird": "^3.0.35",
@@ -55,16 +53,8 @@
     "@types/shopify": "github:nozzlegear/shopify.d.ts#8d6a7cc",
     "@types/whatwg-fetch": "^0.0.32",
     "autoprefixer": "^6.3.7",
-    "awesome-typescript-loader": "^2.0.3",
-    "babel-core": "^6.0.0",
-    "babel-loader": "^6.2.4",
-    "babel-plugin-lodash": "^3.1.5",
-    "babel-plugin-transform-regenerator": "^6.11.4",
-    "babel-polyfill": "^6.9.1",
-    "babel-preset-es2015": "^6.18.0",
-    "babel-preset-react": "^6.16.0",
-    "babel-preset-stage-0": "^6.16.0",
-    "babel-preset-stage-3": "^6.11.0",
+    "awesome-typescript-loader": "2",
+    "concurrently": "^3.1.0",
     "css-loader": "^0.23.1",
     "file-loader": "^0.9.0",
     "image-webpack-loader": "^2.0.0",
@@ -78,7 +68,7 @@
     "style-loader": "^0.13.1",
     "stylus": "^0.54.5",
     "stylus-loader": "^2.3.1",
-    "typescript": "^2.0.6",
+    "typescript": "2.1.1",
     "webpack": "^1.13.1",
     "webpack-dev-middleware": "^1.8.4",
     "webpack-dev-server": "^1.14.1",

@@ -1,11 +1,4 @@
-// Import the babel and fetch polyfills at the top of the application
-try {
-    const babelPolyfill = require("babel-polyfill");
-} catch (e) {
-    if (e.message.indexOf("only one instance of babel-polyfill") === -1) {
-        console.error(e);
-    }
-}
+// Import the fetch polyfill at the top of the application
 try {
     const fetchPolyfill = require("whatwg-fetch");
 } catch (e) {

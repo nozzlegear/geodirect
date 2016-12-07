@@ -32,6 +32,9 @@ const config = {
         root:  process.cwd(),
         extensions: ["", ".webpack.js", ".web.js", ".ts", ".tsx", ".js", ".jsx"],
     },
+    alias: {
+        "css": "./css"
+    },
     externals: { },
     devtool: "source-map",
     plugins: [
@@ -48,20 +51,15 @@ const config = {
         loaders: [
             { 
                 test: /\.tsx?$/i, 
-                loaders: [dev ? "react-hot" : undefined, "babel", 'awesome-typescript-loader?useCache=true'].filter(arg => !!arg),
-            },
-            {
-                loaders: [dev ? "react-hot" : undefined, "babel"].filter(arg => !!arg),
-                test: /\.jsx?$/i,
-                include: path.join(__dirname, 'client')
+                loaders: [dev ? "react-hot" : undefined, 'awesome-typescript-loader?useCache=true'].filter(arg => !!arg),
             },
             {
                 test: /\.css$/i,
-                loaders: ["style", "css", "postcss-loader"]
+                loaders: ["style", "css", "postcss"]
             },
             {
                 test: /\.styl$/i,
-                loaders: ["style", "css", "stylus"]
+                loaders: ["style", "css", "postcss", "stylus"]
             },
             {
                 test: /\.json$/i,

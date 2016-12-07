@@ -1,5 +1,4 @@
-// Import the babel and fetch polyfills at the top of the application
-const babelPolyfill = require("babel-polyfill");
+// Import the fetch polyfill at the top of the application
 const fetchPolyfill = require("whatwg-fetch");
 
 // Material-UI needs the react-tap-event-plugin activated
@@ -44,10 +43,10 @@ import AccountPage from "./pages/account";
 import baseTheme from 'material-ui/styles/baseThemes/lightBaseTheme';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
-require("../node_modules/purecss/build/pure.css");
-require("../node_modules/typebase.css/typebase.css");
-require("../css/theme.styl");
-require("../css/error.styl");
+require("purecss/build/pure.css");
+require("typebase.css/typebase.css");
+require("css/theme.styl");
+require("css/error.styl");
 
 export const theme = getMuiTheme(baseTheme);
 
