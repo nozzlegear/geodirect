@@ -77,7 +77,7 @@ export default async function configureDatabases() {
 
 function prepDatabase<T extends CouchDoc>(name: string) {
     const databaseUrl = `${COUCHDB_URL}/${name}/`;
-    async function checkErrorAndGetBody(result: Response, action: "finding" | "listing" | "counting" | "getting" | "posting" | "putting" | "deleting" | "copying") {
+    async function checkErrorAndGetBody(result: Response, action: "finding" | "listing" | "counting" | "getting" | "posting" | "putting" | "deleting" | "copying" | "viewing") {
         const body = await result.json();
 
         if (!result.ok) {
@@ -194,7 +194,7 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             });
 
             return result.status === 200;
-        },
+        }
     };
 
     return output;
