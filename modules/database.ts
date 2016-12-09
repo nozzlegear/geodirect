@@ -1,24 +1,36 @@
 import { wrap } from "boom";
 import inspect from "./inspect";
-import { snakeCase } from "lodash";
 import { stringify as qs } from "qs";
 import fetch, { Response } from "node-fetch";
+import { snakeCase, isUndefined } from "lodash";
 import { COUCHDB_URL, APP_NAME } from "../modules/constants";
-import { User, Database, CouchResponse, CouchDoc, Geodirect, LoggedPrompt } from "gearworks";
+import {
+    User,
+    Database,
+    CouchResponse,
+    ViewOptions,
+    CouchDoc,
+    Geodirect,
+    LoggedPrompt,
+    ListResponse,
+    CouchDBView,
+    DesignDoc,
+} from "gearworks";
+
+// CouchDB view functions
+import * as CountByTimestamp from "../couchdb/count-by-timestamp";
+import * as CountGroupedByGeodirects from "../couchdb/count-grouped-by-geodirects";
 
 const UsersDatabaseInfo = {
     name: `${snakeCase(APP_NAME)}_users`,
-    indexes: ["shopify_access_token", "password_reset_token", "shop_id"]
+    indexes: ["shopify_access_token", "password_reset_token", "shop_id"],
+    views: [],
 };
 
 const GeodirectsDatabaseInfo = {
     name: `${snakeCase(APP_NAME)}_geodirections`,
-    indexes: ["shop_id"]
-}
-
-const LogsDatabaseInfo = {
-    name: `${snakeCase(APP_NAME)}_geodirection_logs`,
-    indexes: ["shop_id", "geodirect_id"]
+    indexes: ["shop_id"],
+    views: [],
 }
 
 export default async function configureDatabases() {
@@ -35,44 +47,88 @@ export default async function configureDatabases() {
         console.warn(`Warning: Gearworks expects your CouchDB instance to be running CouchDB 2.0 or higher. Version detected: ${version}. Some database methods may not work.`)
     }
 
-    [UsersDatabaseInfo, GeodirectsDatabaseInfo, LogsDatabaseInfo].forEach(async db => {
-        try {
-            const result = await fetch(`${COUCHDB_URL}/${db.name}`, { method: "PUT" });
+    [UsersDatabaseInfo, GeodirectsDatabaseInfo].forEach(async db => await configureDatabase(db));
+}
 
-            if (!result.ok && result.status !== 412 /* Precondition Failed - Database already exists. */) {
-                const body = await result.text();
+export async function configureDatabase(db: { name: string, indexes: string[], views: ({ designDocName: string, viewName: string } & CouchDBView)[] }) {
+    try {
+        const result = await fetch(`${COUCHDB_URL}/${db.name}`, { method: "PUT" });
 
-                throw new Error(`${result.status} ${result.statusText} ${body}`);
-            }
-        } catch (e) {
-            console.error(`Error creating database ${db.name}`, e);
+        if (!result.ok && result.status !== 412 /* Precondition Failed - Database already exists. */) {
+            const body = await result.text();
+
+            throw new Error(`${result.status} ${result.statusText} ${body}`);
+        }
+    } catch (e) {
+        console.error(`Error creating database ${db.name}`, e);
+
+        return;
+    }
+
+    try {
+        const result = await fetch(`${COUCHDB_URL}/${db.name}/_index`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                index: {
+                    fields: db.indexes
+                },
+                name: `${db.name}-indexes`,
+            })
+        });
+
+        if (!result.ok) {
+            const body = await result.text();
+
+            throw new Error(`${result.status} ${result.statusText} ${body}`);
+        }
+    } catch (e) {
+        console.error(`Error creating indexes (${db.indexes}) on database ${db.name}`, e);
+    }
+
+    db.views.forEach(async view => {
+        const url = `${COUCHDB_URL}/${db.name}/_design/${view.designDocName}`;
+        const getDoc = await fetch(url, { method: "GET" });
+        let doc: DesignDoc;
+
+        if (!getDoc.ok && getDoc.status !== 404) {
+            inspect(`Failed to retrieve design doc "${view.designDocName}". ${getDoc.status} ${getDoc.statusText}`, await getDoc.text());
 
             return;
-        }
+        } else if (!getDoc.ok) {
+            doc = {
+                _id: `_design/${view.designDocName}`,
+                language: "javascript",
+                views: { }
+            }
+        } else {
+            doc = await getDoc.json();
+        } 
 
-        try {
-            const result = await fetch(`${COUCHDB_URL}/${db.name}/_index`, {
-                method: "POST",
+        if (!doc.views[view.viewName] || doc.views[view.viewName].map !== view.map || doc.views[view.viewName].reduce !== view.reduce) {
+            doc.views[view.viewName] = {
+                map: view.map,
+                reduce: view.reduce,
+            }
+            
+            const method = "put";
+            const result = await fetch(url, {
+                method,
+                body: JSON.stringify(doc),
                 headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    index: {
-                        fields: db.indexes
-                    },
-                    name: `${db.name}-indexes`,
-                })
+                    "Content-Type": "application/json",
+                }
             });
+            const text = await result.text();
 
             if (!result.ok) {
-                const body = await result.text();
-
-                throw new Error(`${result.status} ${result.statusText} ${body}`);
+                inspect(`Could not ${method} CouchDB design doc "${view.designDocName}". ${result.status} ${result.statusText}`, text);
+                inspect(doc);
             }
-        } catch (e) {
-            console.error(`Error creating indexes (${db.indexes}) on database ${db.name}`, e);
         }
-    });
+    })
 }
 
 function prepDatabase<T extends CouchDoc>(name: string) {
@@ -112,8 +168,9 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             return body.docs;
         },
         list: async function (options = {}) {
+            options = Object.assign({ design_doc_name: "list" }, )
             const query = qs(Object.assign({ include_docs: true }, options));
-            const url = databaseUrl + (options.view ? `_design/list/_view/${options.view}` : `_all_docs`);
+            const url = databaseUrl + `_all_docs`;
             const result = await fetch(`${url}?${query}`, {
                 method: "GET",
             });
@@ -194,6 +251,40 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             });
 
             return result.status === 200;
+        },
+        view: async function (designDocName: string, viewName: string, options: ViewOptions = {}) {
+            if (options.reduce === true) {
+                console.warn("CouchDB .reducedView was passed {reduce: true} with its options. This function always sets reduce to false. Consider using CouchDB .reducedView instead.");
+            }
+
+            options.reduce = false;
+
+            const result = await fetch(`${databaseUrl}_design/${designDocName}/_view/${viewName}?${qs(options)}`, {
+                method: "GET",
+            })
+
+            const body = await checkErrorAndGetBody(result, "viewing");
+
+            return body;
+        },
+        reducedView: async function (designDocName: string, viewName: string, options: ViewOptions = {}) {
+            if (options.reduce === false) {
+                console.warn("CouchDB .reducedView was passed {reduce: false} with its options. This function always sets reduce to true. Consider using CouchDB .view instead.");
+            }
+
+            if (!options.group && isUndefined(options.group_level)) {
+                console.warn("CouchDB .reducedView is not grouping its results. This may not return the desired result. Consider using {group: true} or {group_level: 1}");
+            }
+
+            options.reduce = true;
+
+            const result = await fetch(`${databaseUrl}_design/${designDocName}/_view/${viewName}?${qs(options)}`, {
+                method: "GET",
+            })
+
+            const body = await checkErrorAndGetBody(result, "viewing");
+
+            return body;
         }
     };
 
@@ -202,4 +293,69 @@ function prepDatabase<T extends CouchDoc>(name: string) {
 
 export const users = prepDatabase<User>(UsersDatabaseInfo.name);
 export const geodirects = prepDatabase<Geodirect>(GeodirectsDatabaseInfo.name);
-export const logs = prepDatabase<LoggedPrompt>(LogsDatabaseInfo.name);
+
+export class PromptLogDatabase {
+    constructor(private shop_id: number) {
+        this.database_name = `${snakeCase(APP_NAME)}_shop_${this.shop_id}_logs`;
+        this.database = prepDatabase<LoggedPrompt>(this.database_name);
+    }
+
+    private database_name: string;
+
+    private database: Database<LoggedPrompt>;
+
+    private get COUNT_BY_TIMESTAMP_VIEWNAME() {
+        return "count-by-timestamp";
+    }
+
+    private get COUNT_GROUPED_BY_GEODIRECTS_VIEWNAME() {
+        return "count-grouped-by-geodirects";
+    }
+
+    /**
+     * Prepares the log database by creating it and adding required view documents.
+     */
+    public async prepare() {
+        await configureDatabase({
+            name: this.database_name,
+            indexes: [],
+            views: [
+                {
+                    designDocName: "list",
+                    viewName: this.COUNT_BY_TIMESTAMP_VIEWNAME,
+                    map: CountByTimestamp.map.toString(),
+                    reduce: CountByTimestamp.reduce.toString(),
+                },
+                {
+                    designDocName: "list",
+                    viewName: this.COUNT_GROUPED_BY_GEODIRECTS_VIEWNAME,
+                    map: CountGroupedByGeodirects.map.toString(),
+                    reduce: CountGroupedByGeodirects.reduce.toString(),
+                },
+            ]
+        })
+    }
+
+    /**
+     * Logs a new Geodirect prompt.
+     */
+    public async log(log: LoggedPrompt) {
+        return await this.database.post(log);
+    }
+
+    /**
+     * Counts all logs created on or after the given timestamp.
+     */
+    public async count(since_timestamp: number) {
+        const result = await this.database.view("list", "count-by-timestamp", { start_key: since_timestamp });
+
+        return result.total_rows;
+    }
+
+    /**
+     * Counts all logs, grouped by their Geodirect id.
+     */
+    public async countByGeodirect() {
+        const result = await this.database.view("list", "count-grouped-by-geodirects", { group: true });
+    }
+}

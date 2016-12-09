@@ -44,15 +44,34 @@ declare module "gearworks" {
          * The object's database id.
          */
         _id?: string;
-        
+
         /**
          * The object's database revision.
          */
         _rev?: string;
     }
 
+    export interface ViewOptions extends ListOptions {
+        reduce?: boolean;
+        group?: boolean;
+        group_level?: number;
+    }
+
+    /**
+     * Options for listing database results.
+     */
+    export interface ListOptions {
+        limit?: number;
+        keys?: string[];
+        start_key?: string | number;
+        end_key?: string | number;
+        inclusive_end?: boolean;
+        descending?: boolean;
+        skip?: number;
+    }
+
     export interface Database<T extends CouchDoc> {
-        list: (options?: ListOptions) => Promise<{ offset: number, total_rows: number, rows: T[] }>;
+        list: (options?: ListOptions) => Promise<ListResponse<T>>;
         count: () => Promise<number>;
         get: (id: string, rev?: string) => Promise<T>;
         post: (data: T) => Promise<T>;
@@ -61,12 +80,20 @@ declare module "gearworks" {
         find: (selector: FindSelector) => Promise<T[]>;
         copy: (id: string, data: T, newId: string) => Promise<T>;
         exists: (id: string) => Promise<boolean>;
+        view: <X>(design_doc_name: string, view_name: string, options?: ViewOptions) => Promise<ListResponse<X>>;
+        reducedView: <X>(design_doc_name: string, view_name: string, options?: ViewOptions) => Promise<{ rows: X[] }>;
     }
 
     export interface CouchResponse {
         ok: boolean;
         id: string;
         rev: string;
+    }
+
+    export interface ListResponse<T> {
+        offset: number;
+        total_rows: number;
+        rows: T[];
     }
 
     export interface FindSelector {
@@ -78,14 +105,14 @@ declare module "gearworks" {
         selector: Object;
     }
 
-    /**
-     * Options for listing database results.
-     */
-    export interface ListOptions {
-        limit?: number; 
-        skip?: number; 
-        view?: string;
-        descending?: boolean
+    export interface CouchDBView {
+        map: string;
+        reduce?: string;
+    }
+
+    export interface DesignDoc extends CouchDoc {
+        views: { [name: string]: CouchDBView };
+        language: "javascript";
     }
 
     //#endregion

@@ -5,7 +5,7 @@ import { Express } from "express";
 import inspect from "../../modules/inspect";
 import { RouterFunction, Geodirect } from "gearworks";
 import { LogPromptRequest } from "gearworks/requests";
-import { geodirects, logs } from "../../modules/database";
+import { geodirects, PromptLogDatabase } from "../../modules/database";
 
 export const BASE_PATH = "/api/v1/geodirects/";
 
@@ -147,14 +147,15 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         }),
         handler: async function (req, res, next) {
             const {id} = req.validatedParams;
-            const body = req.validatedBody as LogPromptRequest;
-            
-            const log = await logs.post({
+            const {shop_id, rev} = req.validatedBody as LogPromptRequest;
+            const db = new PromptLogDatabase(shop_id);
+
+            const log = await db.log({
                 geodirect_id: id,
-                geodirect_rev: body.rev,
-                shop_id: body.shop_id,
+                geodirect_rev: rev,
+                shop_id: shop_id,
                 timestamp: Date.now()
-            });
+            })
 
             res.json(log);
 
