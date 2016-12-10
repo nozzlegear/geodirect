@@ -88,31 +88,65 @@ export async function configureDatabase(db: { name: string, indexes: string[], v
         console.error(`Error creating indexes (${db.indexes}) on database ${db.name}`, e);
     }
 
-    db.views.forEach(async view => {
-        const url = `${COUCHDB_URL}/${db.name}/_design/${view.designDocName}`;
+    const designDocs = db.views.reduce((result, view) => {
+        if (result.indexOf(view.designDocName) === -1) {
+            result.push(view.designDocName);
+        }
+
+        return result;
+    }, []);
+    const viewsByDoc: { [docname: string]: { name: string, map: string, reduce: string }[] } = db.views.reduce((result, view) => {
+        const item = {
+            name: view.viewName,
+            map: view.map,
+            reduce: view.reduce,
+        };
+
+        if (Array.isArray(result[view.designDocName])) {
+            result[view.designDocName].push(item);
+        } else {
+            result[view.designDocName] = [item]
+        }
+
+        return result;
+    }, {});
+
+    designDocs.forEach(async docName => {
+        const url = `${COUCHDB_URL}/${db.name}/_design/${docName}`;
         const getDoc = await fetch(url, { method: "GET" });
         let doc: DesignDoc;
 
         if (!getDoc.ok && getDoc.status !== 404) {
-            inspect(`Failed to retrieve design doc "${view.designDocName}". ${getDoc.status} ${getDoc.statusText}`, await getDoc.text());
+            inspect(`Failed to retrieve design doc "${docName}". ${getDoc.status} ${getDoc.statusText}`, await getDoc.text());
 
             return;
         } else if (!getDoc.ok) {
             doc = {
-                _id: `_design/${view.designDocName}`,
+                _id: `_design/${docName}`,
                 language: "javascript",
-                views: { }
+                views: {}
             }
         } else {
             doc = await getDoc.json();
-        } 
+        }
 
-        if (!doc.views[view.viewName] || doc.views[view.viewName].map !== view.map || doc.views[view.viewName].reduce !== view.reduce) {
-            doc.views[view.viewName] = {
-                map: view.map,
-                reduce: view.reduce,
+        const docViews = viewsByDoc[docName];
+        let shouldUpdate = false;
+
+        docViews.forEach(view => {
+            if (!doc.views[view.name] || doc.views[view.name].map !== view.map || doc.views[view.name].reduce !== view.reduce) {
+                doc.views[view.name] = {
+                    map: view.map,
+                    reduce: view.reduce,
+                }
+
+                shouldUpdate = true;
             }
-            
+        });
+
+        if (shouldUpdate) {
+            inspect(`Creating or updating design doc "${docName}".`);
+
             const method = "put";
             const result = await fetch(url, {
                 method,
@@ -124,7 +158,7 @@ export async function configureDatabase(db: { name: string, indexes: string[], v
             const text = await result.text();
 
             if (!result.ok) {
-                inspect(`Could not ${method} CouchDB design doc "${view.designDocName}". ${result.status} ${result.statusText}`, text);
+                inspect(`Could not ${method} CouchDB design doc "${docName}". ${result.status} ${result.statusText}`, text);
                 inspect(doc);
             }
         }
@@ -356,6 +390,8 @@ export class PromptLogDatabase {
      * Counts all logs, grouped by their Geodirect id.
      */
     public async countByGeodirect() {
-        const result = await this.database.view("list", "count-grouped-by-geodirects", { group: true });
+        const result = await this.database.reducedView("list", "count-grouped-by-geodirects", { group: true });
+
+        return result;
     }
 }
