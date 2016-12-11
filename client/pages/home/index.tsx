@@ -239,7 +239,7 @@ export default class HomePage extends Observer<IProps, IState> {
                 return hit && hit.count || 0;
             }
 
-            body = Object.getOwnPropertyNames(geosByRegion).map(region => {
+            body = Object.getOwnPropertyNames(geosByRegion || {}).map(region => {
                 const geodirects = geosByRegion[region] as DetailedGeo[];
 
                 if (geodirects.length === 0) {
