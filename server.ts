@@ -94,7 +94,7 @@ async function startServer(hostname: string, port: number, securePort: number) {
     const lexTempDir = path.join(os.tmpdir(), "acme-challenges");
     const lex = letsEncrypt.create({
         // You must set server to https://acme-v01.api.letsencrypt.org/directory after you have tested that your setup works.
-        server: (!ISLIVE || true) ? "staging" : "https://acme-v01.api.letsencrypt.org/directory",
+        server: (!ISLIVE) ? "staging" : "https://acme-v01.api.letsencrypt.org/directory",
         challenges: { 'tls-sni-01': require('le-challenge-sni').create({ webrootPath: lexTempDir }) },
         challengeType: 'tls-sni-01',
         store: require('le-store-certbot').create({ webrootPath: lexTempDir }),
@@ -103,7 +103,7 @@ async function startServer(hostname: string, port: number, securePort: number) {
             options.agreeTos = true;
             options.domains = (certs && certs.altnames) || options.domains;
  
-            if (!options.domains.every(domain => domain.toLowerCase().indexOf(EMAIL_DOMAIN.toLowerCase()) >= 0)) {
+            if (!options.domains.every(domain => /geodirect\.co/i.test(domain))) {
                 const msg = `Attempted to approve a domain that wasn't ${EMAIL_DOMAIN} or a subdomain thereof.`;
 
                 inspect(msg, options.domains);
