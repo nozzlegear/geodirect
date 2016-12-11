@@ -291,7 +291,7 @@ export default class HomePage extends Observer<IProps, IState> {
                         </div>
                     </div>
                     <hr />
-                    <div className="hidden-md">
+                    <div className="md-hidden">
                         <h3 className="error">{`Warning: ${APP_NAME} was built for use on a larger screen. Some actions may be difficult or impossible on a mobile device.`}</h3>
                     </div>
                     {body}
