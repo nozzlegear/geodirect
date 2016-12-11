@@ -10,6 +10,7 @@ import { truncate, range } from "lodash";
 import Paths from "../../../modules/paths";
 import Observer from "../../components/observer";
 import { Region, countries } from "typed-countries";
+import { APP_NAME } from "../../../modules/constants";
 import AddIcon from "material-ui/svg-icons/content/add";
 import { Geodirects, ApiError } from "../../../modules/api";
 import DeleteIcon from "material-ui/svg-icons/action/delete";
@@ -84,7 +85,7 @@ export default class HomePage extends Observer<IProps, IState> {
             return;
         }
 
-        this.setState(state);
+        this.setState(state); 
     }
 
     private getGeos(): Geodirect[] {
@@ -279,17 +280,20 @@ export default class HomePage extends Observer<IProps, IState> {
         };
 
         return (
-            <div>
+            <div>                                                                                                                                                                                                                                               
                 <section id="home" className="content">
-                    <div className="pure-g align-children">
-                        <div className="pure-u-18-24">
+                    <div className="pure-g md-align-children">
+                        <div className="pure-u-1-1 pure-u-md-18-24">
                             <h2 className="content-title">{`Geography-based URL redirects for ${this.props.auth.session.shopify_shop_name}`}</h2>
                         </div>
-                        <div className="pure-u-6-24 text-right">
+                        <div className="pure-u-1-1 pure-u-md-6-24 md-text-right">
                             <RaisedButton primary={true} label={`New Geodirect`} icon={<AddIcon />} onTouchTap={e => this.setState({ dialogOpen: true, selectedGeo: undefined })} />
                         </div>
                     </div>
                     <hr />
+                    <div className="hidden-md">
+                        <h3 className="error">{`Warning: ${APP_NAME} was built for use on a larger screen. Some actions may be difficult or impossible on a mobile device.`}</h3>
+                    </div>
                     {body}
                 </section>
                 {!!this.state.selectedGeo ? <Toolbar theme={theme} onRequestDelete={() => this.deleteSelected()} onRequestEdit={() => this.editSelected()} /> : null}

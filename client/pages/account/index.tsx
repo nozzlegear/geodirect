@@ -161,21 +161,35 @@ export default class AccountPage extends Observer<IProps, IState> {
                 <section id="account" className="content">
                     <h2 className="content-title">{"Your Account"}</h2>
                     <div className="pure-g">
-                        <div className="pure-u-11-24">
+                        <div className="pure-u-1-1 pure-u-md-11-24">
                             <Card>
                                 <CardHeader title={auth.shopify_shop_name} subtitle={auth._id} avatar={gravatar.url(auth._id)} />
                                 <CardText>
-                                    <p className="underline">{"Date Created:"} <span>{new Date(auth.date_created).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span></p>
-                                    <p className="underline">{"Shop URL:"}<span>{auth.shopify_domain}</span></p>
+                                    <div className="underline">
+                                        <div className="pure-u-9-24">
+                                            {"Date Created:"} 
+                                        </div>
+                                        <div className="pure-u-15-24 ellipsis text-right">
+                                            {new Date(auth.date_created).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                        </div>
+                                    </div>
+                                    <div className="underline">
+                                        <div className="pure-u-8-24">
+                                            {"Shop URL:"}
+                                        </div>
+                                        <div className="pure-u-16-24 ellipsis text-right">
+                                            {auth.shopify_domain}
+                                        </div>
+                                    </div>
                                 </CardText>
                                 <CardActions>
-                                    <RaisedButton label="Change Login Email" onTouchTap={e => this.setState({ emailDialogOpen: true })} />
-                                    <RaisedButton label="Change Login Password" style={{ float: "right" }} onTouchTap={e => this.setState({ passwordDialogOpen: true })} />
+                                    <RaisedButton label="Change Login Email" style={{marginBottom: "1rem"}} onTouchTap={e => this.setState({ emailDialogOpen: true })} />
+                                    <RaisedButton label="Change Login Password" className="sm-float-right" onTouchTap={e => this.setState({ passwordDialogOpen: true })} />
                                 </CardActions>
                             </Card>
                         </div>
-                        <div className="pure-u-2-24" />
-                        <div className="pure-u-11-24">
+                        <div className="pure-u-1-1 pure-u-md-2-24" />
+                        <div className="pure-u-1-1 pure-u-md-11-24">
                             {this.BillingCardBody()}
                         </div>
                     </div>

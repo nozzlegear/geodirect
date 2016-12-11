@@ -131,7 +131,7 @@ export default class GeodirectDialog extends Router<IProps, IState> {
                     onTouchTap={e => props.onRequestClose()} />,
                 <RaisedButton
                     key="save_button"
-                    label="Save Geodirect"
+                    label="Save"
                     primary={true}
                     onTouchTap={e => this.saveGeodirect()} />,
             ];
@@ -168,6 +168,7 @@ export default class GeodirectDialog extends Router<IProps, IState> {
                 open={props.open || false}
                 actions={actions}
                 modal={true}
+                autoScrollBodyContent={true}
                 title={ !!this.props.original ? "Edit Geodirect" : "New Geodirect"}
                 onRequestClose={e => props.onRequestClose()}>
                 {form}

@@ -44,9 +44,11 @@ import baseTheme from 'material-ui/styles/baseThemes/lightBaseTheme';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
 require("purecss/build/pure.css");
+require("purecss/build/grids-responsive.css");
 require("typebase.css/typebase.css");
 require("css/theme.styl");
 require("css/error.styl");
+require("css/utilities.styl");
 
 export const theme = getMuiTheme(baseTheme);
 
