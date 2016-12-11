@@ -1,6 +1,10 @@
 // Material-UI needs the react-tap-event-plugin activated
-const injectTapEventPlugin = require("react-tap-event-plugin");
-injectTapEventPlugin();
+try {
+    const injectTapEventPlugin = require("react-tap-event-plugin");
+    injectTapEventPlugin();
+} catch (e) {
+    // Ignore! Errors are thrown when the tap event has already been injected.
+}
 
 // Libs
 import * as React from 'react';
@@ -18,6 +22,8 @@ import { LogPromptRequest } from "gearworks/requests";
 export interface IProps extends React.Props<any> {
     geodirect: Geodirect;
     shop_id: number;
+    test?: boolean;
+    onRequestClose?: () => void;
 }
 
 export interface IState {
@@ -50,6 +56,10 @@ export default class Prompt extends React.Component<IProps, IState> {
     }
 
     private shouldLogPrompt() {
+        if (this.props.test) {
+            return false;
+        }
+
         const loggedDataString = localStorage.getItem(PROMPT_SHOWN_KEY);
 
         if (!loggedDataString) {
@@ -65,6 +75,12 @@ export default class Prompt extends React.Component<IProps, IState> {
     //#endregion
 
     private dismiss() {
+        if (this.props.test) {
+            this.props.onRequestClose();
+
+            return;
+        }
+
         localStorage.setItem(PROMPT_DISMISSED_KEY, JSON.stringify({ timestamp: Date.now() }));
 
         this.setState({ open: false });
@@ -86,6 +102,12 @@ export default class Prompt extends React.Component<IProps, IState> {
     }
 
     public componentDidMount() {
+        if (this.props.test) {
+            this.setState({ open: true });
+
+            return;
+        }
+
         if (!!localStorage.getItem(PROMPT_DISMISSED_KEY)) {
             console.log(`${APP_NAME}: User has previously dismissed this prompt. Will not show again.`);
 
@@ -139,16 +161,22 @@ export default class Prompt extends React.Component<IProps, IState> {
     public render() {
         const geo = this.props.geodirect;
         const {open} = this.state;
+        const labelText = "Go";
         const country = Countries.find(c => c.iso === geo.country);
         const actions = [
             <RaisedButton key="geo-close" label="Close" onClick={e => this.dismiss()} style={{ float: "left" }} />,
-            <RaisedButton key="geo-go" label="Okay" onClick={e => this.navigate()} primary={true} />,
+            <RaisedButton key="geo-go" label={labelText} onClick={e => this.navigate()} primary={true} />,
         ]
 
         return (
             <MuiThemeProvider>
                 <Dialog open={open} title={`Looks like you're visiting from ${geo.country}.`} actions={actions}>
                     <p>{geo.message}</p>
+                    <p>
+                        {`Clicking "${labelText}" will bring you to `}
+                        <a href={geo.url}>{geo.url}</a>
+                        {`.`}
+                    </p>
                 </Dialog>
             </MuiThemeProvider>
         );

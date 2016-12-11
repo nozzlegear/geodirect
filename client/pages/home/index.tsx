@@ -5,6 +5,7 @@ import { observer } from "mobx-react";
 import { Geodirect } from "gearworks";
 import { Models } from "shopify-prime";
 import Dialog from "./geodirect_dialog";
+import Prompt from "../../../tag/prompt";
 import { truncate, range } from "lodash";
 import Paths from "../../../modules/paths";
 import Observer from "../../components/observer";
@@ -52,6 +53,7 @@ export interface IState {
     error?: string;
     dialogOpen?: boolean;
     selectedGeo?: DetailedGeo;
+    testingGeo?: DetailedGeo;
     geosByRegion?: GeosByRegion
     hits?: {
         geodirect_id: string;
@@ -181,6 +183,12 @@ export default class HomePage extends Observer<IProps, IState> {
         this.setState({ dialogOpen: true });
     }
 
+    private testPrompt(e: React.MouseEvent<any>, geo: DetailedGeo) {
+        e.preventDefault();
+
+        this.setState({ testingGeo: geo });
+    }
+
     public async componentDidMount() {
         const api = new Geodirects(this.props.auth.token);
         let hits: { geodirect_id: string; count: number }[] = [];
@@ -231,7 +239,7 @@ export default class HomePage extends Observer<IProps, IState> {
             }
 
             body = Object.getOwnPropertyNames(geosByRegion).map(region => {
-                const geodirects = geosByRegion[region] as (Geodirect & { countryName: string })[];
+                const geodirects = geosByRegion[region] as DetailedGeo[];
 
                 if (geodirects.length === 0) {
                     return null;
@@ -243,6 +251,7 @@ export default class HomePage extends Observer<IProps, IState> {
                         <TD><a href={geo.url} title={geo.url} target="_blank">{geo.url}</a></TD>
                         <TD><span title={geo.message}>{truncate(geo.message, 75)}</span></TD>
                         <TD>{getHitCount(geo._id)}</TD>
+                        <TD><a href='#' onClick={e => this.testPrompt(e, geo)}>{"Click here to test."}</a></TD>
                     </TR>
                 );
 
@@ -256,6 +265,7 @@ export default class HomePage extends Observer<IProps, IState> {
                                     <TH>{"Redirects To"}</TH>
                                     <TH>{"Message"}</TH>
                                     <TH>{"Hits"}</TH>
+                                    <TH>{"Test"}</TH>
                                 </TR>
                             </TableHeader>
                             <TableBody deselectOnClickaway={false} >
@@ -284,6 +294,7 @@ export default class HomePage extends Observer<IProps, IState> {
                 </section>
                 {!!this.state.selectedGeo ? <Toolbar theme={theme} onRequestDelete={() => this.deleteSelected()} onRequestEdit={() => this.editSelected()} /> : null}
                 <Dialog open={this.state.dialogOpen} original={this.state.selectedGeo} apiToken={this.props.auth.token} onRequestClose={(geo) => this.closeDialog(geo)} />
+                {this.state.testingGeo ? <Prompt test={true} onRequestClose={() => this.setState({ testingGeo: undefined })} geodirect={this.state.testingGeo} shop_id={this.props.auth.session.shopify_shop_id} /> : null}
                 {this.state.error ? <Snackbar open={true} autoHideDuration={10000} message={this.state.error} onRequestClose={e => this.closeErrorSnackbar(e)} /> : null}
             </div>
         );
