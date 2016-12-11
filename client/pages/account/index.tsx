@@ -6,7 +6,7 @@ import { observer } from "mobx-react";
 import { Models } from "shopify-prime";
 import Observer from "../../components/observer";
 import { APP_NAME } from "../../../modules/constants";
-import { Shopify, ApiError } from "../../../modules/api";
+import { Shopify, Geodirects, ApiError } from "../../../modules/api";
 import Plans, { findPlan, getPlanDescription } from "../../../modules/plans";
 import {
     Card,
@@ -68,12 +68,15 @@ export default class AccountPage extends Observer<IProps, IState> {
     private async refreshData() {
         await this.setStateAsync({ loading: true });
 
-        const api = new Shopify(this.props.auth.token);
+        const shopifyApi = new Shopify(this.props.auth.token);
+        const logApi = new Geodirects(this.props.auth.token);
 
         try {
-            const charge = await api.getPlanDetails();
+            const charge = await shopifyApi.getPlanDetails();
+            const timestamp = new Date(charge.billing_on).getTime() - (1000 * 60 * 60 * 24 * 30 /* 30 days in milliseconds */);
+            const hitsThisMonth = await logApi.countLogs({ timestamp })
 
-            await this.setStateAsync({ charge, hitsThisMonth: 100, loading: false, });
+            await this.setStateAsync({ charge, hitsThisMonth: hitsThisMonth.count, loading: false, });
         } catch (e) {
             const err: ApiError = e;
 

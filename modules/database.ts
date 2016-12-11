@@ -381,17 +381,18 @@ export class PromptLogDatabase {
      * Counts all logs created on or after the given timestamp.
      */
     public async count(since_timestamp: number) {
-        const result = await this.database.view("list", this.COUNT_BY_TIMESTAMP_VIEWNAME, { start_key: since_timestamp });
+        const options = { start_key: since_timestamp, group_level: 0 };
+        const result = await this.database.reducedView<{key: undefined, value: number}>("list", this.COUNT_BY_TIMESTAMP_VIEWNAME, options);
 
-        return result.total_rows;
+        return result.rows.reduce((output, row) => output + row.value, 0);
     }
 
     /**
      * Counts all logs, grouped by their Geodirect id.
      */
     public async countByGeodirect() {
-        const result = await this.database.reducedView("list", this.COUNT_GROUPED_BY_GEODIRECTS_VIEWNAME, { group: true });
+        const result = await this.database.reducedView<{ key: string, value: number }>("list", this.COUNT_GROUPED_BY_GEODIRECTS_VIEWNAME, { group: true });
 
-        return result;
+        return result.rows.map(r => ({ geodirect_id: r.key, count: r.value }));
     }
 }

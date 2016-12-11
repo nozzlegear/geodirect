@@ -89,7 +89,7 @@ export function MinimalMain(props) {
     )
 }
 
-{
+(function (){
     function checkAuthState(requireShopifyIntegration: boolean, requireSubscriptionPlan: boolean) {
         return (args: Router.RouterState, replace: Router.RedirectFunction, callback: Function) => {
             if (AuthStore.sessionIsInvalid) {
@@ -144,4 +144,4 @@ export function MinimalMain(props) {
     )
 
     renderComponent(routes, document.getElementById("contenthost"));
-}
+}())

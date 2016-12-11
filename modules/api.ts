@@ -146,6 +146,10 @@ export class Geodirects extends BaseService {
     public list = (data: { shop_id: number }) => this.sendRequest<Geodirect[]>(``, "GET", data);
 
     public delete = (id: string) => this.sendRequest<void>(`${id}`, "DELETE");
+
+    public countLogs = (data?: {timestamp?: number}) => this.sendRequest<{count: number}>(`logs/count`, "GET", data);
+
+    public countLogsByGeodirect = () => this.sendRequest<{geodirect_id: string, count: number}[]>(`logs/count/by-geodirect`, "GET");
 }
 
 export class IP extends BaseService {

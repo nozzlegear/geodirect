@@ -211,7 +211,6 @@ declare module "gearworks" {
         country?: string;
         url?: string;
         message?: string;
-        hits?: number;
     }
 
     export interface LoggedPrompt extends CouchDoc {

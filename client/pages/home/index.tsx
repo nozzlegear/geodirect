@@ -53,6 +53,10 @@ export interface IState {
     dialogOpen?: boolean;
     selectedGeo?: DetailedGeo;
     geosByRegion?: GeosByRegion
+    hits?: {
+        geodirect_id: string;
+        count: number;
+    }[]
 }
 
 @observer(["auth"])
@@ -179,11 +183,14 @@ export default class HomePage extends Observer<IProps, IState> {
 
     public async componentDidMount() {
         const api = new Geodirects(this.props.auth.token);
+        let hits: { geodirect_id: string; count: number }[] = [];
         let geosByRegion: GeosByRegion;
         let error: string = undefined;
 
         try {
             const geos = await api.list({ shop_id: this.props.auth.session.shopify_shop_id });
+            hits = await api.countLogsByGeodirect();
+
             geosByRegion = this.mapGeosToRegions(geos);
         } catch (e) {
             const err: ApiError = e;
@@ -195,7 +202,7 @@ export default class HomePage extends Observer<IProps, IState> {
             error = err.message;
         }
 
-        this.setState({ loading: false, geosByRegion, error });
+        this.setState({ loading: false, geosByRegion, hits, error });
     }
 
     public componentDidUpdate() {
@@ -216,7 +223,13 @@ export default class HomePage extends Observer<IProps, IState> {
                 </div>
             );
         } else {
-            const geosByRegion = this.state.geosByRegion;
+            const {geosByRegion, hits} = this.state;
+            const getHitCount = function (id: string) {
+                const hit = hits.find(h => h.geodirect_id === id);
+
+                return hit && hit.count || 0;
+            }
+
             body = Object.getOwnPropertyNames(geosByRegion).map(region => {
                 const geodirects = geosByRegion[region] as (Geodirect & { countryName: string })[];
 
@@ -229,7 +242,7 @@ export default class HomePage extends Observer<IProps, IState> {
                         <TD>{geo.countryName}</TD>
                         <TD><a href={geo.url} title={geo.url} target="_blank">{geo.url}</a></TD>
                         <TD><span title={geo.message}>{truncate(geo.message, 75)}</span></TD>
-                        <TD>{geo.hits || 0}</TD>
+                        <TD>{getHitCount(geo._id)}</TD>
                     </TR>
                 );
 

@@ -42,12 +42,12 @@ export const AUTH_HEADER_NAME = "x-gearworks-token";
 /**
  * Localstorage key for logging when a user dismisses a prompt without navigating.
  */
-export const PROMPT_DISMISSED_KEY = `${APP_NAME}-Prompt-Dismissed`;
+export const PROMPT_DISMISSED_KEY = `${APP_NAME}_Prompt_Dismissed`;
 
 /**
  * Localstorage key for logging when a user has been shown a prompt.
  */
-export const PROMPT_SHOWN_KEY = `${APP_NAME}-Prompt-Navigated`;
+export const PROMPT_SHOWN_KEY = `${APP_NAME}_Prompt_Shown`;
 
 /**
  * A list of Shopify authorization scopes that will be requested from the user during app installation.
