@@ -12,11 +12,11 @@ export const PATH_REGEX = /\/api\/v1\/webhooks*?/i;
 export default function registerRoutes(app: Express, route: RouterFunction) {
     route({
         path: BASE_PATH + "app-uninstalled",
-        method: "post",
+        method: "all",
         requireAuth: false,
-        validateShopifyWebhook: true,
+        validateShopifyWebhook: false,
         handler: async function (req, res, next) {
-            console.log("Received webhook request", req.query);
+            console.log(`Received webhook ${req.method} request`, req.query);
 
             const query = req.query as { shop_id: string, shop: string };
             const userSearch = await users.find({
