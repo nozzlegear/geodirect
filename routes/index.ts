@@ -60,7 +60,7 @@ export default async function registerAllRoutes(app: Express) {
     const route: RouterFunction = (config) => {
         const corsMiddleware = config.cors ? cors() : (req, res, next) => next();
 
-        if (config.cors) {
+        if (config.cors && config.method !== "all") {
             // Add an OPTIONS request handler for the path. All non-trivial CORS requests from browsers 
             // send an OPTIONS preflight request.
             app.options(config.path, cors());
