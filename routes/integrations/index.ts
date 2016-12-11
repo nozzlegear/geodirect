@@ -8,7 +8,7 @@ import { ActivatePlanRequest } from "gearworks/requests";
 import { users, PromptLogDatabase } from "../../modules/database";
 import Plans, { findPlan, getPlanTerms } from "../../modules/plans";
 import { Auth, Shops, Webhooks, RecurringCharges, Models, ScriptTags } from "shopify-prime";
-import { DEFAULT_SCOPES, SHOPIFY_API_KEY, SHOPIFY_SECRET_KEY, ISLIVE, APP_NAME } from "../../modules/constants";
+import { DEFAULT_SCOPES, SHOPIFY_API_KEY, SHOPIFY_SECRET_KEY, ISLIVE, APP_NAME, TEST_USERNAME_REGEX } from "../../modules/constants";
 
 export const BASE_PATH = "/api/v1/integrations/";
 
@@ -121,13 +121,14 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             const planId: string = req.validatedQuery.plan_id;
             const redirect = req.validatedQuery.redirect_path;
             const plan = findPlan(planId);
+            const regex = new RegExp(TEST_USERNAME_REGEX);
             const charge = await api.create({
                 trial_days: 0,
                 name: `${APP_NAME} ${plan.name} plan`,
                 capped_amount: plan.price_cap,
                 price: undefined,
                 terms: getPlanTerms(plan),
-                test: !ISLIVE,
+                test: !ISLIVE || regex.test(req.user._id),
                 return_url: req.domainWithProtocol + redirect + `?${qs.stringify({ plan_id: plan.id })}`,
             });
 

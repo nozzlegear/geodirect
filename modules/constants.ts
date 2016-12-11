@@ -1,6 +1,7 @@
 import { resolve } from "path";
 import { snakeCase } from "lodash";
 import { Enums } from "shopify-prime";
+import { v4 as guid } from "node-uuid";
 
 // NODE_ENV is injected by webpack for the browser client.
 declare const NODE_ENV: string;
@@ -34,6 +35,11 @@ export const SPARKPOST_API_KEY = get("SPARKPOST_API_KEY");
 export const SHOPIFY_API_KEY = get("SHOPIFY_API_KEY");
 
 export const SHOPIFY_SECRET_KEY = get("SHOPIFY_SECRET_KEY");
+
+/**
+ * A regex string that can be used to see if a username should use test mode charges.
+ */
+export const TEST_USERNAME_REGEX: string = get("TEST_USERNAME_REGEX", guid());
 
 export const ISLIVE = env.NODE_ENV === "production" || (isBrowser && NODE_ENV === "production");
 
