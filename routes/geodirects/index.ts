@@ -76,14 +76,6 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
             res.json(geo);
 
-            try {
-                const db = new PromptLogDatabase(req.user.shopify_shop_id);
-
-                await db.prepare()
-            } catch (e) {
-                inspect(`Failed to prepare user log database #${req.user.shopify_shop_id}`, e);
-            }
-
             return next();
         }
     })

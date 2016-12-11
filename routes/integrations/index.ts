@@ -89,6 +89,14 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
             await res.withSessionToken(user);
 
+            try {
+                const db = new PromptLogDatabase(user.shopify_shop_id);
+
+                await db.prepare()
+            } catch (e) {
+                inspect(`Failed to prepare user log database #${user.shopify_shop_id}`, e);
+            }
+
             // Don't create any webhooks unless this app is running on a real domain. Webhooks cannot point to localhost.
             if (ISLIVE) {
                 // Create the AppUninstalled webhook immediately after the user accepts installation
