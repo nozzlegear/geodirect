@@ -5,6 +5,7 @@ import { Express } from "express";
 import inspect from "../../modules/inspect";
 import { RouterFunction, User } from "gearworks";
 import { ActivatePlanRequest } from "gearworks/requests";
+import { BASE_PATH as WEBHOOKS_BASE_PATH } from "../webhooks";
 import { users, PromptLogDatabase } from "../../modules/database";
 import Plans, { findPlan, getPlanTerms } from "../../modules/plans";
 import { Auth, Shops, Webhooks, RecurringCharges, Models, ScriptTags } from "shopify-prime";
@@ -103,12 +104,18 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
                 const webhooks = new Webhooks(model.shop, accessToken);
                 const existingHooks = await webhooks.list({ topic: "app/uninstalled", fields: "id", limit: 1 });
 
+                inspect("Looking for webhooks", existingHooks);
+
                 // Ensure the webhook doesn't already exist
                 if (existingHooks.length === 0) {
                     const hook = await webhooks.create({
-                        address: `${req.domainWithProtocol}/api/v1/webhooks/app-uninstalled?shop_id=${user.shopify_shop_id}`,
+                        address: req.domainWithProtocol + WEBHOOKS_BASE_PATH + `app-uninstalled?shop_id=${user.shopify_shop_id}`,
                         topic: "app/uninstalled"
                     })
+
+                    inspect("Created webhook", hook);
+                } else {
+                    inspect("Didn't created app-uninstalled webhook");
                 }
             }
 

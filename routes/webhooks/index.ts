@@ -16,6 +16,8 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         requireAuth: false,
         validateShopifyWebhook: true,
         handler: async function (req, res, next) {
+            console.log("Received webhook request", req.query);
+
             const query = req.query as { shop_id: string, shop: string };
             const userSearch = await users.find({
                 selector: {

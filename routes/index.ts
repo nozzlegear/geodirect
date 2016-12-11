@@ -166,6 +166,8 @@ export default async function registerAllRoutes(app: Express) {
                 if (!isValid) {
                     const error = forbidden("Request does not pass Shopify's webhook validation scheme.")
 
+                    console.log("Shopify webhook did not pass validation scheme");
+
                     return next(error);
                 }
             }
