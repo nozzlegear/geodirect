@@ -8,7 +8,6 @@ import inspect from "./modules/inspect";
 import * as httpsRedirect from "redirect-https";
 import * as letsEncrypt from "letsencrypt-express";
 import { ISLIVE, EMAIL_DOMAIN } from "./modules/constants";
-import { json as parseJson, urlencoded as parseUrlEncoded } from "body-parser";
 
 // Server configurations
 import configureDatabase from "./modules/database";
@@ -53,10 +52,6 @@ async function startServer(hostname: string, port: number, securePort: number) {
     // Enabling this will replace the `request.protocol` with the protocol that was requested by the end user, 
     // rather than the internal protocol used by the proxy.
     app.enable("trust proxy");
-
-    // Set up request body parsers
-    app.use(parseJson());
-    app.use(parseUrlEncoded({ extended: true }));
 
     // Configure the server
     await configureCache();

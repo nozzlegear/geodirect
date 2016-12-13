@@ -7,6 +7,7 @@ import { getCacheValue } from "../modules/cache";
 import { seal, unseal } from "../modules/encryption";
 import { badData, unauthorized, forbidden } from "boom";
 import { Express, Request, Response, NextFunction } from "express";
+import { json as parseJson, urlencoded as parseUrlEncoded } from "body-parser";
 import { AUTH_HEADER_NAME, JWT_SECRET_KEY, SEALABLE_USER_PROPERTIES, SHOPIFY_SECRET_KEY } from "../modules/constants";
 import { RouterResponse, RouterFunction, RouterRequest, User, SessionToken, WithSessionTokenFunction } from "gearworks";
 
@@ -58,7 +59,10 @@ export default async function registerAllRoutes(app: Express) {
 
     // A custom routing function that handles authentication and body/query/param validation
     const route: RouterFunction = (config) => {
+        const method = config.method.toLowerCase();
         const corsMiddleware = config.cors ? cors() : (req, res, next) => next();
+        let jsonParserMiddleware = (req, res, next) => next();
+        let formParserMiddleware = (req, res, next) => next();
 
         if (config.cors && config.method !== "all") {
             // Add an OPTIONS request handler for the path. All non-trivial CORS requests from browsers 
@@ -66,7 +70,15 @@ export default async function registerAllRoutes(app: Express) {
             app.options(config.path, cors());
         }
 
-        app[config.method.toLowerCase()](config.path, corsMiddleware, async function (req: RouterRequest, res: RouterResponse, next: NextFunction) {
+        // Webhook validation must read the body exactly as its sent by Shopify, which is impossible when using parser middleware.
+        // If the route requires validation a Shopify webhook, we'll skip parser middleware and parse it ourselves.
+        if (!config.validateShopifyWebhook) {
+            // Set up request body parsers
+            jsonParserMiddleware = parseJson();
+            formParserMiddleware = parseUrlEncoded({ extended: true });
+        }
+        
+        app[method](config.path, corsMiddleware, jsonParserMiddleware, formParserMiddleware, async function (req: RouterRequest, res: RouterResponse, next: NextFunction) {
             req.domainWithProtocol = `${req.protocol}://${req.hostname}` + (req.hostname === "localhost" ? ":3000" : "");
 
             if (config.requireAuth) {
@@ -172,6 +184,10 @@ export default async function registerAllRoutes(app: Express) {
                     console.log("Shopify webhook did not pass validation scheme");
 
                     return next(error);
+                }
+
+                if (req.header("content-type") === "application/json") {
+                    req.body = JSON.parse(rawBody);
                 }
             }
 
