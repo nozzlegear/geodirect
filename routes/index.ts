@@ -2,6 +2,7 @@ import * as cors from "cors";
 import { Auth } from "shopify-prime";
 import * as Bluebird from "bluebird";
 import { Schema, validate } from "joi";
+import inspect from "../modules/inspect";
 import { decode, encode } from "jwt-simple";
 import { getCacheValue } from "../modules/cache";
 import { seal, unseal } from "../modules/encryption";
@@ -10,6 +11,11 @@ import { Express, Request, Response, NextFunction } from "express";
 import { json as parseJson, urlencoded as parseUrlEncoded } from "body-parser";
 import { AUTH_HEADER_NAME, JWT_SECRET_KEY, SEALABLE_USER_PROPERTIES, SHOPIFY_SECRET_KEY } from "../modules/constants";
 import { RouterResponse, RouterFunction, RouterRequest, User, SessionToken, WithSessionTokenFunction } from "gearworks";
+
+// Temporary imports
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 
 // Import routes to register
 import registerIp from "./ip";
@@ -183,7 +189,15 @@ export default async function registerAllRoutes(app: Express) {
 
                     console.log("Shopify webhook did not pass validation scheme");
 
-                    return next(error);
+                    //return next(error);
+
+                    fs.writeFileSync(path.join(os.tmpdir(), "shopify-webhook.txt"), rawBody);
+                    
+                    console.log(`TEMP: Wrote request body to ${path.join(os.tmpdir(), "shopify-webhook.txt")} Allowing request to go through despite webhook not passing validation scheme.`);
+
+                    inspect("Request headers", req.headers);
+                } else {
+                    console.log("WAS VALID!");
                 }
 
                 if (req.header("content-type") === "application/json") {
