@@ -26,7 +26,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             });
 
             if (userSearch.length === 0) {
-                console.log(`Could not find owner of shop id ${query.shop} during app/uninstalled webhook.`);
+                console.log(`Could not find owner of shop id ${query.shop_id} during app/uninstalled webhook.`);
 
                 // No user found with that shopId. This webhook may be a duplicate. Return OK to prevent Shopify resending the webhook.
                 res.status(200);
@@ -41,6 +41,8 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             user.shopify_domain = undefined;
             user.shopify_shop_id = undefined;
             user.shopify_shop_name = undefined;
+            user.charge_id = undefined;
+            user.plan_id = undefined;
 
             const update = await users.put(user._id, user, user._rev);
 
