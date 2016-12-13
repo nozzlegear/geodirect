@@ -14,7 +14,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         path: BASE_PATH + "app-uninstalled",
         method: "all",
         requireAuth: false,
-        validateShopifyWebhook: false,
+        validateShopifyWebhook: true,
         handler: async function (req, res, next) {
             console.log(`Received webhook ${req.method} request`, req.query);
 

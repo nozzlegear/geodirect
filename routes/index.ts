@@ -153,6 +153,7 @@ export default async function registerAllRoutes(app: Express) {
             }
 
             if (config.validateShopifyWebhook) {
+                console.log("Validating shopify webhook");
                 // To validate a webhook request, we must read the raw body as it was sent by Shopify — not the parsed body.
                 const rawBody = await new Bluebird<string>((res, rej) => {
                     let body: string = "";
@@ -160,6 +161,8 @@ export default async function registerAllRoutes(app: Express) {
                     req.on("data", chunk => body += chunk);
                     req.on("end", () => res(body));
                 })
+
+                console.log("Read webhook validation body");
 
                 const isValid = await Auth.isAuthenticWebhook(req.headers, rawBody, SHOPIFY_SECRET_KEY);
 
