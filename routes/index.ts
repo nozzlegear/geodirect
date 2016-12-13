@@ -171,7 +171,14 @@ export default async function registerAllRoutes(app: Express) {
             }
 
             if (config.validateShopifyWebhook) {
-                console.log("Validating shopify webhook");
+                // If the body is empty, there's no way to validate the webhook.
+                if (req.headers['transfer-encoding'] === undefined && isNaN(req.headers['content-length'] as any)) {
+                    const error = forbidden("Request does not pass Shopify's webhook validation scheme.");
+                    inspect("Webhook body appears to be empty and cannot be validated. Headers:", req.headers);
+
+                    return next(error);
+                }
+
                 // To validate a webhook request, we must read the raw body as it was sent by Shopify — not the parsed body.
                 const rawBody = await new Bluebird<string>((res, rej) => {
                     let body: string = "";
@@ -180,24 +187,12 @@ export default async function registerAllRoutes(app: Express) {
                     req.on("end", () => res(body));
                 })
 
-                console.log("Read webhook validation body");
-
                 const isValid = await Auth.isAuthenticWebhook(req.headers, rawBody, SHOPIFY_SECRET_KEY);
 
                 if (!isValid) {
                     const error = forbidden("Request does not pass Shopify's webhook validation scheme.")
 
-                    console.log("Shopify webhook did not pass validation scheme");
-
-                    //return next(error);
-
-                    fs.writeFileSync(path.join(os.tmpdir(), "shopify-webhook.txt"), rawBody);
-                    
-                    console.log(`TEMP: Wrote request body to ${path.join(os.tmpdir(), "shopify-webhook.txt")} Allowing request to go through despite webhook not passing validation scheme.`);
-
-                    inspect("Request headers", req.headers);
-                } else {
-                    console.log("WAS VALID!");
+                    return next(error);
                 }
 
                 if (req.header("content-type") === "application/json") {

@@ -1,8 +1,9 @@
 import * as joi from "joi";
 import * as boom from "boom";
 import { Express } from "express";
+import inspect from "../../modules/inspect";
+import { users } from "../../modules/database";
 import { RouterFunction, User } from "gearworks";
-import { users } from "./../../modules/database";
 import { setCacheValue } from "../../modules/cache";
 
 export const BASE_PATH = "/api/v1/webhooks/";
@@ -16,8 +17,6 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         requireAuth: false,
         validateShopifyWebhook: true,
         handler: async function (req, res, next) {
-            console.log(`Received webhook ${req.method} request`, req.query);
-
             const query = req.query as { shop_id: string, shop: string };
             const userSearch = await users.find({
                 selector: {
@@ -26,7 +25,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             });
 
             if (userSearch.length === 0) {
-                console.log(`Could not find owner of shop id ${query.shop_id} during app/uninstalled webhook.`);
+                inspect(`Could not find owner of shop id ${query.shop_id} during app/uninstalled webhook. Returning true to prevent webhook retries.`);
 
                 // No user found with that shopId. This webhook may be a duplicate. Return OK to prevent Shopify resending the webhook.
                 res.status(200);
@@ -51,7 +50,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
                 await setCacheValue("auth-invalidation", user._id, true, 21 * 1000 * 60 * 60 * 24 /* 21 days in milliseconds */);
             }
             catch (e) {
-                console.error("Failed to delete user data from auth cache after handling app/uninstalled webhook.", e);
+                inspect("Failed to delete user data from auth cache after handling app/uninstalled webhook.", e);
             }
 
             res.json({});
