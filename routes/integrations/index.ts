@@ -104,18 +104,12 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
                 const webhooks = new Webhooks(model.shop, accessToken);
                 const existingHooks = await webhooks.list({ topic: "app/uninstalled", fields: "id", limit: 1 });
 
-                inspect("Looking for webhooks", existingHooks);
-
                 // Ensure the webhook doesn't already exist
                 if (existingHooks.length === 0) {
                     const hook = await webhooks.create({
                         address: req.domainWithProtocol + WEBHOOKS_BASE_PATH + `app-uninstalled?shop_id=${user.shopify_shop_id}`,
                         topic: "app/uninstalled"
                     })
-
-                    inspect("Created webhook", hook);
-                } else {
-                    inspect("Didn't created app-uninstalled webhook");
                 }
             }
 
